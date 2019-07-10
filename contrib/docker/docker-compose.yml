@@ -8,25 +8,9 @@ volumes:
   ckan_storage:
   ckan_bg_storage:
   pg_data:
+  solr_data:
 
 services:
-
-  solr:
-    container_name: solr
-    build:
-      context: ../../
-      dockerfile: contrib/docker/solr/Dockerfile
-    # a.s. TODO: remove this later. Needed only for local machine to check the data
-    ports:
-      - 8983:8983
-
-    logging:
-        driver: "json-file"
-        options:
-           max-size: "20m"
-           max-file: "5"
-
-
   ckan-bg:
     container_name: ckan-bg
     build:
@@ -202,11 +186,21 @@ services:
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
-  # solr:
-  #   container_name: solr
-  #   build:
-  #     context: ../../
-  #     dockerfile: contrib/docker/solr/Dockerfile
+  solr:
+    container_name: solr
+    build:
+      context: ../../
+      dockerfile: contrib/docker/solr/Dockerfile
+    volumes:
+      - solr_data:/opt/solr/server/solr/ckan/data
+    # a.s. TODO: remove this later. Needed only for local machine to check the data
+    ports:
+      - 8983:8983
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
 
 
   redis:
