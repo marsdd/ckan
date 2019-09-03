@@ -153,6 +153,7 @@ ckan.featured_orgs = city-of-toronto the-ontario-ministry-of-transportation gove
 ckan.featured_orgs_homepage = ministry-of-transportation government-of-canada blackberry-qnx
 ckan.featured_groups_homepage = physical-infrastructure road-health telematics traffic-information vehicle vehicular-communications
 
+
 # package_hide_extras = for_search_index_only
 #package_edit_return_url = http://another.frontend/dataset/<NAME>
 #package_new_return_url = http://another.frontend/dataset/<NAME>
