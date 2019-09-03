@@ -198,9 +198,12 @@ class FunctionalTestBase(object):
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls._original_config = dict(config)
         cls._apply_config_changes(config)
+        try:
+            config['ckan.plugins'] = ' '.join(cls._load_plugins)
+            del cls._test_app  # reload with the new plugins
+        except AttributeError:
+            pass
         cls._get_test_app()
-        for plugin in getattr(cls, '_load_plugins', []):
-            p.load(plugin)
 
     @classmethod
     def _apply_config_changes(cls, cfg):
@@ -293,7 +296,7 @@ def webtest_submit(form, name=None, index=None, value=None, **args):
     '''
     fields = webtest_submit_fields(form, name, index=index, submit_value=value)
     if form.method.upper() != "GET":
-        args.setdefault("content_type",  form.enctype)
+        args.setdefault("content_type", form.enctype)
     return form.response.goto(form.action, method=form.method,
                               params=fields, **args)
 
