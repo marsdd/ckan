@@ -124,8 +124,8 @@ services:
       - db
       # a.s. added solr
       - solr
-#    ports:
-#      - "0.0.0.0:${CKAN_PORT}:5000"
+    ports:
+      - "0.0.0.0:${CKAN_PORT}:5000"
     environment:
       # a.s. used from ckan-entrypoint.sh to wait until solr is up and running
       - solr_host=solr
