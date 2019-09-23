@@ -38,7 +38,8 @@ def package_patch(context, data_dict):
         'session': context['session'],
         'user': context['user'],
         'auth_user_obj': context['auth_user_obj'],
-        }
+        'ignore_auth': context.get('ignore_auth', False),
+    }
 
     package_dict = _get_action('package_show')(
         show_context,
@@ -68,7 +69,7 @@ def resource_patch(context, data_dict):
         'session': context['session'],
         'user': context['user'],
         'auth_user_obj': context['auth_user_obj'],
-        }
+    }
 
     resource_dict = _get_action('resource_show')(
         show_context,
@@ -97,7 +98,7 @@ def group_patch(context, data_dict):
         'session': context['session'],
         'user': context['user'],
         'auth_user_obj': context['auth_user_obj'],
-        }
+    }
 
     group_dict = _get_action('group_show')(
         show_context,
@@ -127,7 +128,7 @@ def organization_patch(context, data_dict):
         'session': context['session'],
         'user': context['user'],
         'auth_user_obj': context['auth_user_obj'],
-        }
+    }
 
     organization_dict = _get_action('organization_show')(
         show_context,

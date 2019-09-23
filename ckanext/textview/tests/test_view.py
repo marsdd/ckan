@@ -1,6 +1,7 @@
 # encoding: utf-8
 from ckan.common import config
-import urlparse
+
+from six.moves.urllib.parse import urljoin
 
 import ckan.model as model
 import ckan.plugins as plugins
@@ -51,7 +52,7 @@ class TestTextView(object):
         model.repo.rebuild_db()
 
     def test_can_view(self):
-        url_same_domain = urlparse.urljoin(
+        url_same_domain = urljoin(
             config.get('ckan.site_url', '//localhost:5000'),
             '/resource.txt')
         url_different_domain = 'http://some.com/resource.txt'
@@ -105,8 +106,9 @@ class TestTextView(object):
                             id=self.package.name, resource_id=self.resource_id,
                             view_id=self.resource_view['id'])
         result = app.get(url)
-        assert (('text_view.js' in result.body) or
-                ('text_view.min.js' in result.body))
+        print(result.body)
+        assert (('text_view.js' in result.body) or  # Source file
+                ('textview.js' in result.body))     # Compiled file
         # Restore the config to its original values
         config.clear()
         config.update(original_config)

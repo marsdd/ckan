@@ -2,7 +2,7 @@
 
 import logging
 import datetime
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from pylons.i18n import get_lang
 from six import string_types, text_type
@@ -806,7 +806,7 @@ class GroupController(base.BaseController):
                     revision_dict['timestamp'])
                 try:
                     dayHorizon = int(request.params.get('days'))
-                except:
+                except ValueError:
                     dayHorizon = 30
                 dayAge = (datetime.datetime.now() - revision_date).days
                 if dayAge >= dayHorizon:
