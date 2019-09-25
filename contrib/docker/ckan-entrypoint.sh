@@ -39,16 +39,10 @@ set_environment() {
   export CKAN_SMTP_MAIL_FROM=${CKAN_SMTP_MAIL_FROM}
   export CKAN_MAX_UPLOAD_SIZE_MB=${CKAN_MAX_UPLOAD_SIZE_MB}
 
-  export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-  export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-  export AWS_REGION=${AWS_REGION}
-  export AWS_CKAN_GROUP=${AWS_CKAN_GROUP}
-  export AWS_CKAN_STREAM=${AWS_CKAN_STREAM}
-
   export oce_email_distribution_group=${oce_email_distribution_group}
 }
 
-write_config() {
+write_config () {
   ckan-paster make-config --no-interactive ckan "$CONFIG"
 }
 
