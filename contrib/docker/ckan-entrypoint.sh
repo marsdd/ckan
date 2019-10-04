@@ -92,7 +92,7 @@ set_environment
 # initialize core db
 ckan-paster --plugin=ckan db init -c "${CKAN_CONFIG}/production.ini"
 # initialize plugin db
-ckan-paster --plugin=ckanext-marsavin db init --config= -c "${CKAN_CONFIG}/production.ini"
+ckan-paster --plugin=ckanext-marsavin db init -c "${CKAN_CONFIG}/production.ini"
 
 # initialize the schema changes needed by the plugin
 cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-marsavin package update_search_schema -c "${CKAN_CONFIG}/production.ini"
