@@ -42,7 +42,7 @@ set_environment() {
   export oce_email_distribution_group=${oce_email_distribution_group}
 }
 
-write_config () {
+write_config() {
   ckan-paster make-config --no-interactive ckan "$CONFIG"
 }
 
