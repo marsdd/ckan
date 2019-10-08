@@ -97,6 +97,8 @@ ckan.auth.public_activity_stream_detail = true
 ckan.site_id = default
 ckan.cache_enabled = True
 ckan.cache_expires = 600
+ckan.static_max_age = 3600
+
 #solr_url = http://127.0.0.1:8983/solr
 
 
