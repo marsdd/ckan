@@ -12,6 +12,7 @@ import hashlib
 import json
 from cStringIO import StringIO
 
+import six
 from six.moves.urllib.parse import (
     urlencode, unquote, urlunparse, parse_qsl, urlparse
 )
@@ -361,7 +362,7 @@ def _where_clauses(data_dict, fields_types):
     filters = data_dict.get('filters', {})
     clauses = []
 
-    for field, value in filters.iteritems():
+    for field, value in six.iteritems(filters):
         if field not in fields_types:
             continue
         field_array_type = _is_array_type(fields_types[field])
@@ -386,7 +387,7 @@ def _where_clauses(data_dict, fields_types):
             clauses.append((clause_str,))
         elif isinstance(q, dict):
             lang = _fts_lang(data_dict.get('lang'))
-            for field, value in q.iteritems():
+            for field, value in six.iteritems(q):
                 if field not in fields_types:
                     continue
                 query_field = _ts_query_alias(field)
@@ -427,7 +428,7 @@ def _textsearch_query(lang, q, plain):
         statements.append(query)
         rank_columns[u'rank'] = rank
     elif isinstance(q, dict):
-        for field, value in q.iteritems():
+        for field, value in six.iteritems(q):
             query, rank = _build_query_and_rank_statements(
                 lang, value, plain, field)
             statements.append(query)
@@ -820,7 +821,7 @@ def create_indexes(context, data_dict):
             name=_generate_index_name(data_dict['resource_id'], fields_string),
             fields=fields_string))
 
-    sql_index_strings = map(lambda x: x.replace('%', '%%'), sql_index_strings)
+    sql_index_strings = [x.replace('%', '%%') for x in sql_index_strings]
     current_indexes = _get_index_names(context['connection'],
                                        data_dict['resource_id'])
     for sql_index_string in sql_index_strings:
@@ -882,7 +883,7 @@ def create_table(context, data_dict):
             field['type'] = _guess_type(records[0][field['id']])
 
     # Check for duplicate fields
-    unique_fields = set([f['id'] for f in supplied_fields])
+    unique_fields = {f['id'] for f in supplied_fields}
     if not len(unique_fields) == len(supplied_fields):
         raise ValidationError({
             'field': ['Duplicate column names are not supported']
@@ -1201,7 +1202,7 @@ def validate(context, data_dict):
     data_dict_copy.pop('records_format', None)
     data_dict_copy.pop('calculate_record_count', None)
 
-    for key, values in data_dict_copy.iteritems():
+    for key, values in six.iteritems(data_dict_copy):
         if not values:
             continue
         if isinstance(values, string_types):

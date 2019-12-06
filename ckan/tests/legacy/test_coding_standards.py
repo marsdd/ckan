@@ -24,6 +24,7 @@ import os
 import re
 import sys
 
+import six
 import pycodestyle
 
 file_path = os.path.dirname(__file__)
@@ -456,7 +457,7 @@ class TestPep8(object):
         'ckan/tests/legacy/schema/test_schema.py',
         'ckan/tests/legacy/test_plugins.py',
         'ckan/tests/legacy/test_versions.py',
-        'ckan/tests/migration/test_revision_legacy_code.py',
+        'test_revision_legacy_code.py',
         'ckan/websetup.py',
         'ckanext/datastore/bin/datastore_setup.py',
         'ckanext/datastore/logic/action.py',
@@ -465,10 +466,8 @@ class TestPep8(object):
         'ckanext/example_idatasetform/plugin.py',
         'ckanext/example_itemplatehelpers/plugin.py',
         'ckanext/multilingual/plugin.py',
-        'ckanext/resourceproxy/plugin.py',
         'ckanext/stats/controller.py',
         'ckanext/stats/stats.py',
-        'ckanext/stats/tests/test_stats_lib.py',
         'ckanext/stats/tests/test_stats_plugin.py',
         'ckanext/test_tag_vocab_plugin.py',
         'ckanext/tests/plugin.py',
@@ -673,7 +672,7 @@ class TestActionAuth(object):
 
     def test_fn_signatures(self):
         errors = []
-        for name, fn in self.actions.iteritems():
+        for name, fn in six.iteritems(self.actions):
             args_info = inspect.getargspec(fn)
             if args_info.args != ['context', 'data_dict'] \
                     or args_info.varargs is not None \
@@ -686,7 +685,7 @@ class TestActionAuth(object):
 
     def test_fn_docstrings(self):
         errors = []
-        for name, fn in self.actions.iteritems():
+        for name, fn in six.iteritems(self.actions):
             if not getattr(fn, '__doc__', None):
                 if name not in self.ACTION_NO_DOC_STR_BLACKLIST:
                     errors.append(name)

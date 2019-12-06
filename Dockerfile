@@ -56,7 +56,7 @@ RUN mkdir -p $CKAN_VENV $CKAN_CONFIG $CKAN_STORAGE_PATH && \
 ADD . $CKAN_VENV/src/ckan/
 RUN ckan-pip install -U pip && \
   ckan-pip install --upgrade --no-cache-dir -r $CKAN_VENV/src/ckan/requirement-setuptools.txt && \
-  ckan-pip install --upgrade --no-cache-dir -r $CKAN_VENV/src/ckan/requirements.txt && \
+  ckan-pip install --upgrade --no-cache-dir -r $CKAN_VENV/src/ckan/requirements-py2.txt && \
   ckan-pip install -e $CKAN_VENV/src/ckan/ && \
   ckan-pip install https://github.com/marsdd/ckanext-marsavin/archive/$MARS_PLUGIN_VERSION.zip && \
   ckan-pip install https://github.com/marsdd/ckanext-multilang/archive/$MARS_PLUGIN_VERSION.zip && \
