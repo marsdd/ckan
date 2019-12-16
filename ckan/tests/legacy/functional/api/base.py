@@ -7,7 +7,6 @@ except ImportError:
 
 from nose.tools import assert_equal
 from paste.fixture import TestRequest
-from webhelpers.html import url_escape
 
 from six.moves.urllib.parse import quote
 
@@ -41,7 +40,7 @@ class ApiTestCase(object):
         return response
 
     def post(self, offset, data, status=[200,201], *args, **kwds):
-        params = '%s=1' % url_escape(self.dumps(data))
+        params = '%s=1' % quote(self.dumps(data))
         if 'extra_environ' in kwds:
             self.extra_environ = kwds['extra_environ']
         response = self.app.post(offset, params=params, status=status,
@@ -122,7 +121,7 @@ class ApiTestCase(object):
         data = self.loads(msg)
         keys = set(data.keys())
         expected_keys = set(['id', 'name', 'title', 'description', 'created',
-                            'state', 'revision_id', 'packages'])
+                            'state', 'packages'])
         missing_keys = expected_keys - keys
         assert not missing_keys, missing_keys
         assert_equal(data['name'], 'roger')

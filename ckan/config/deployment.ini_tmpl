@@ -121,7 +121,7 @@ ckan.cache_expires = 600
 #       Add ``datapusher`` to enable DataPusher
 #		Add ``resource_proxy`` to enable resorce proxying and get around the
 #		same origin policy
-ckan.plugins = stats text_view image_view recline_view datastore datapusher googleanalytics marsavin marsavinResource marsavinPackage MarsavinRequestAccess
+ckan.plugins = stats text_view image_view recline_view datastore datapusher googleanalytics marsavin marsavinResource marsavinPackage MarsavinRequestAccess multilang
 # ckan.plugins = stats text_view image_view recline_view
 
 # Define which views should be created by default
@@ -217,6 +217,7 @@ ckan.hide_activity_from_users = %(ckan.site_id)s
 #smtp.user = username@example.com
 #smtp.password = your_password
 #smtp.mail_from =
+#smtp.reply_to =
 
 ## Background Job Settings
 ckan.jobs.timeout = 180

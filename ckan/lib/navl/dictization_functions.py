@@ -1,14 +1,11 @@
 # encoding: utf-8
 
 import copy
-import formencode as fe
-import inspect
 import json
 
+import six
 from six import text_type
-from ckan.common import config
-
-from ckan.common import _
+from ckan.common import config, _
 
 
 class Missing(object):
@@ -109,7 +106,7 @@ def flatten_schema(schema, flattened=None, key=None):
     flattened = flattened or {}
     old_key = key or []
 
-    for key, value in schema.iteritems():
+    for key, value in six.iteritems(schema):
         new_key = old_key + [key]
         if isinstance(value, dict):
             flattened = flatten_schema(value, flattened, new_key)
@@ -124,7 +121,7 @@ def get_all_key_combinations(data, flattened_schema):
     match the schema ignoring the last value in the tuple.
 
     '''
-    schema_prefixes = set([key[:-1] for key in flattened_schema])
+    schema_prefixes = {key[:-1] for key in flattened_schema}
     combinations = set([()])
 
     for key in sorted(data.keys(), key=flattened_order_key):
@@ -156,7 +153,7 @@ def make_full_schema(data, schema):
         for key in combination[::2]:
             sub_schema = sub_schema[key]
 
-        for key, value in sub_schema.iteritems():
+        for key, value in six.iteritems(sub_schema):
             if isinstance(value, list):
                 full_schema[combination + (key,)] = value
 
@@ -215,22 +212,6 @@ def augment_data(data, schema):
 
 
 def convert(converter, key, converted_data, errors, context):
-
-    if inspect.isclass(converter) and issubclass(converter, fe.Validator):
-        try:
-            value = converted_data.get(key)
-            value = converter().to_python(value, state=context)
-        except fe.Invalid as e:
-            errors[key].append(e.msg)
-        return
-
-    if isinstance(converter, fe.Validator):
-        try:
-            value = converted_data.get(key)
-            value = converter.to_python(value, state=context)
-        except fe.Invalid as e:
-            errors[key].append(e.msg)
-        return
 
     try:
         value = converter(converted_data.get(key))
@@ -398,7 +379,7 @@ def flatten_dict(data, flattened=None, old_key=None):
     flattened = flattened or {}
     old_key = old_key or []
 
-    for key, value in data.iteritems():
+    for key, value in six.iteritems(data):
         new_key = old_key + [key]
         if isinstance(value, list) and value and isinstance(value[0], dict):
             flattened = flatten_list(value, flattened, new_key)
