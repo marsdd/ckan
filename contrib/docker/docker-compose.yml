@@ -63,6 +63,11 @@ services:
       # m.m.
       - GAID=${GAID}
 
+      # s.h
+      # mailchimp api and audience id values for adding users to mailchimp list
+      - mailchimp_audience_id=${mailchimp_audience_id}
+      - mailchimp_api_key=${mailchimp_api_key}
+
       # a.s. Google tracking
       - CKAN_TRACKING_ENABLED=True
 
@@ -139,6 +144,11 @@ services:
 
       # m.m.
       - GAID=${GAID}
+
+      # s.h
+      # mailchimp api and audience id values for adding users to mailchimp list
+      - mailchimp_audience_id=${mailchimp_audience_id}
+      - mailchimp_api_key=${mailchimp_api_key}
 
       # a.s. Google tracking
       - CKAN_TRACKING_ENABLED=True
