@@ -40,6 +40,7 @@ services:
       args:
         - CKAN_SITE_URL=${CKAN_SITE_URL}
         - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
+        - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
 #    links:
 #      # a.s.
 #      - db
@@ -61,6 +62,11 @@ services:
 
       # m.m.
       - GAID=${GAID}
+
+      # s.h
+      # mailchimp api and audience id values for adding users to mailchimp list
+      - mailchimp_audience_id=${mailchimp_audience_id}
+      - mailchimp_api_key=${mailchimp_api_key}
 
       # a.s. Google tracking
       - CKAN_TRACKING_ENABLED=True
@@ -115,6 +121,7 @@ services:
       args:
           - CKAN_SITE_URL=${CKAN_SITE_URL}
           - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
+          - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
 #    links:
 #      # a.s.
 #      - db
@@ -137,6 +144,11 @@ services:
 
       # m.m.
       - GAID=${GAID}
+
+      # s.h
+      # mailchimp api and audience id values for adding users to mailchimp list
+      - mailchimp_audience_id=${mailchimp_audience_id}
+      - mailchimp_api_key=${mailchimp_api_key}
 
       # a.s. Google tracking
       - CKAN_TRACKING_ENABLED=True
