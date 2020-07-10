@@ -97,7 +97,7 @@ fi
 set_environment
 
 # initialize core db
-ckan-paster --plugin=ckan db init -c "${CKAN_CONFIG}/production.ini"
+ckan db init
 # initialize avin plugin db
 ckan-paster --plugin=ckanext-marsavin db init -c "${CKAN_CONFIG}/production.ini"
 
@@ -112,5 +112,5 @@ cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-marsavin package 
 cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-multilang multilangdb initsearch -c "${CKAN_CONFIG}/production.ini"
 
 # Rebuild the search index
-cd /usr/lib/ckan/venv/src/ckan && ckan-paster search-index rebuild -c "${CKAN_CONFIG}/production.ini"
+cd /usr/lib/ckan/venv/src/ckan && ckan search-index rebuild
 exec "$@"

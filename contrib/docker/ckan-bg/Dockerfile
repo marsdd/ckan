@@ -36,6 +36,7 @@ ENV CKAN_HOME /usr/lib/ckan
 ENV CKAN_VENV $CKAN_HOME/venv
 ENV CKAN_CONFIG /etc/ckan
 ENV CKAN_STORAGE_PATH=/var/lib/ckan
+ENV CKAN_INI=/etc/ckan/production.ini
 
 # Build-time variables specified by docker-compose.yml / .env
 ARG CKAN_SITE_URL
@@ -50,7 +51,9 @@ RUN mkdir -p $CKAN_VENV $CKAN_CONFIG $CKAN_STORAGE_PATH && \
   virtualenv $CKAN_VENV && \
   ln -s $CKAN_VENV/bin/pip /usr/local/bin/ckan-pip &&\
   ln -s $CKAN_VENV/bin/paster /usr/local/bin/ckan-paster &&\
-  ckan-pip install -e git+https://github.com/ckan/ckanext-googleanalytics.git#egg=ckanext-googleanalytics && \
+  ln -s $CKAN_VENV/bin/ckan /usr/local/bin/ckan
+
+RUN ckan-pip install -e git+https://github.com/ckan/ckanext-googleanalytics.git#egg=ckanext-googleanalytics && \
   ckan-pip install -r $CKAN_VENV/src/ckanext-googleanalytics/requirements.txt
 
 # Setup CKAN
@@ -70,4 +73,4 @@ ENTRYPOINT ["/ckan-entrypoint.sh"]
 
 USER ckan
 
-CMD ["/usr/lib/ckan/venv/bin/paster","--plugin=ckan","jobs","worker","--config=/etc/ckan/production.ini"]
+CMD ["/usr/lib/ckan/venv/bin/ckan","jobs","worker"]

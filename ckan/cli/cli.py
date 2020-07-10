@@ -33,7 +33,7 @@ from ckan.cli import (
 )
 
 from ckan.cli import seed
-
+logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
