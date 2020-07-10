@@ -29,7 +29,7 @@ def validator_args(fn):
 def default_resource_schema(
         ignore_empty, unicode_safe, ignore, ignore_missing,
         remove_whitespace, if_empty_guess_format, clean_format, isodate,
-        int_validator, extras_unicode_convert, keep_extras):
+        int_validator, extras_valid_json, keep_extras):
     return {
         'id': [ignore_empty, unicode_safe],
         'package_id': [ignore],
@@ -52,7 +52,7 @@ def default_resource_schema(
         'cache_last_updated': [ignore_missing, isodate],
         'tracking_summary': [ignore_missing],
         'datastore_active': [ignore_missing],
-        '__extras': [ignore_missing, extras_unicode_convert, keep_extras],
+        '__extras': [ignore_missing, extras_valid_json, keep_extras],
     }
 
 
@@ -197,6 +197,7 @@ def default_show_package_schema(
         'mimetype': [],
         'cache_url': [],
         'name': [],
+        'description': [],
         'mimetype_inner': [],
         'resource_type': [],
         'url_type': [],
@@ -384,9 +385,9 @@ def default_update_relationship_schema(
 @validator_args
 def default_user_schema(
         ignore_missing, unicode_safe, name_validator, user_name_validator,
-        user_password_validator, user_password_not_empty,
+        user_password_validator, user_password_not_empty, email_is_unique,
         ignore_not_sysadmin, not_empty, email_validator,
-        user_about_validator, ignore, boolean_validator):
+        user_about_validator, ignore, boolean_validator, json_object):
     return {
         'id': [ignore_missing, unicode_safe],
         'name': [
@@ -395,7 +396,7 @@ def default_user_schema(
         'password': [user_password_validator, user_password_not_empty,
                      ignore_missing, unicode_safe],
         'password_hash': [ignore_missing, ignore_not_sysadmin, unicode_safe],
-        'email': [not_empty, unicode_safe, email_validator],
+        'email': [not_empty, email_validator, email_is_unique, unicode_safe],
         'about': [ignore_missing, user_about_validator, unicode_safe],
         'created': [ignore],
         'sysadmin': [ignore_missing, ignore_not_sysadmin],
@@ -404,15 +405,20 @@ def default_user_schema(
         'activity_streams_email_notifications': [ignore_missing,
                                                  boolean_validator],
         'state': [ignore_missing],
+        'image_url': [ignore_missing, unicode_safe],
+        'image_display_url': [ignore_missing, unicode_safe],
+        'plugin_extras': [ignore_missing, json_object, ignore_not_sysadmin],
     }
 
 
 @validator_args
 def user_new_form_schema(
         unicode_safe, user_both_passwords_entered,
-        user_password_validator, user_passwords_match):
+        user_password_validator, user_passwords_match,
+        email_is_unique):
     schema = default_user_schema()
 
+    schema['email'] = [email_is_unique]
     schema['password1'] = [text_type, user_both_passwords_entered,
                            user_password_validator, user_passwords_match]
     schema['password2'] = [text_type]
@@ -423,9 +429,10 @@ def user_new_form_schema(
 @validator_args
 def user_edit_form_schema(
         ignore_missing, unicode_safe, user_both_passwords_entered,
-        user_password_validator, user_passwords_match):
+        user_password_validator, user_passwords_match, email_is_unique):
     schema = default_user_schema()
 
+    schema['email'] = [email_is_unique]
     schema['password'] = [ignore_missing]
     schema['password1'] = [ignore_missing, unicode_safe,
                            user_password_validator, user_passwords_match]
@@ -437,11 +444,14 @@ def user_edit_form_schema(
 @validator_args
 def default_update_user_schema(
         ignore_missing, name_validator, user_name_validator,
-        unicode_safe, user_password_validator):
+        unicode_safe, user_password_validator, email_is_unique,
+        not_empty, email_validator):
     schema = default_user_schema()
 
     schema['name'] = [
         ignore_missing, name_validator, user_name_validator, unicode_safe]
+    schema['email'] = [
+        not_empty, email_validator, email_is_unique, unicode_safe]
     schema['password'] = [
         user_password_validator, ignore_missing, unicode_safe]
 
@@ -782,4 +792,40 @@ def job_list_schema(ignore_missing, list_of_strings):
 def job_clear_schema(ignore_missing, list_of_strings):
     return {
         u'queues': [ignore_missing, list_of_strings],
+    }
+
+
+@validator_args
+def default_create_api_token_schema(
+        not_empty, unicode_safe,
+        ignore_missing, json_object, ignore_not_sysadmin):
+    return {
+        u'name': [not_empty, unicode_safe],
+        u'user': [not_empty, unicode_safe],
+        u'plugin_extras': [ignore_missing, json_object, ignore_not_sysadmin],
+    }
+
+
+@validator_args
+def package_revise_schema(
+        ignore_missing, list_of_strings,
+        collect_prefix_validate, json_or_string,
+        json_list_or_string, dict_only):
+    return {
+        u'__before': [
+            collect_prefix_validate(
+                u'match__', u'json_or_string'),
+            collect_prefix_validate(
+                u'update__', u'json_or_string')],
+        u'match': [
+            ignore_missing, json_or_string, dict_only],
+        u'filter': [
+            ignore_missing, json_list_or_string, list_of_strings],
+        u'update': [
+            ignore_missing, json_or_string, dict_only],
+        u'include': [
+            ignore_missing, json_list_or_string, list_of_strings],
+        # collect_prefix moves values to these, always dicts:
+        u'match__': [],
+        u'update__': [],
     }

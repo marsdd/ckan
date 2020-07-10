@@ -8,9 +8,10 @@ import inspect
 import itertools
 import pkgutil
 
-from flask import Flask, Blueprint, send_from_directory
+from flask import Blueprint, send_from_directory
 from flask.ctx import _AppCtxGlobals
 from flask.sessions import SessionInterface
+from flask_multistatic import MultiStaticFlask
 
 import six
 from werkzeug.exceptions import default_exceptions, HTTPException
@@ -28,7 +29,10 @@ import ckan.model as model
 from ckan.lib import base
 from ckan.lib import helpers
 from ckan.lib import jinja_extensions
+from ckan.lib import uploader
+from ckan.lib import i18n
 from ckan.common import config, g, request, ungettext
+from ckan.config.middleware.common_middleware import TrackingMiddleware
 import ckan.lib.app_globals as app_globals
 import ckan.lib.plugins as lib_plugins
 import ckan.plugins.toolkit as toolkit
@@ -39,12 +43,25 @@ from ckan.plugins.interfaces import IBlueprint, IMiddleware, ITranslation
 from ckan.views import (identify_user,
                         set_cors_headers_for_response,
                         check_session_cookie,
-                        set_controller_and_action
+                        set_controller_and_action,
+                        set_cache_control_headers_for_response,
+                        handle_i18n,
+                        set_ckan_current_url,
                         )
 
 import logging
 from logging.handlers import SMTPHandler
 log = logging.getLogger(__name__)
+
+
+class I18nMiddleware(object):
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+
+        handle_i18n(environ)
+        return self.app(environ, start_response)
 
 
 class CKANBabel(Babel):
@@ -72,7 +89,7 @@ class CKANBabel(Babel):
             self._i18n_path_idx += 1
 
 
-def make_flask_stack(conf, **app_conf):
+def make_flask_stack(conf):
     """ This has to pass the flask app through all the same middleware that
     Pylons used """
 
@@ -80,9 +97,23 @@ def make_flask_stack(conf, **app_conf):
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     debug = asbool(conf.get('debug', conf.get('DEBUG', False)))
-    testing = asbool(app_conf.get('testing', app_conf.get('TESTING', False)))
-    app = flask_app = CKANFlask(__name__)
+    testing = asbool(conf.get('testing', conf.get('TESTING', False)))
+    app = flask_app = CKANFlask(__name__, static_url_path='')
+
+    # Register storage for accessing group images, site logo, etc.
+    storage_folder = []
+    storage = uploader.get_storage_path()
+    if storage:
+        storage_folder = [os.path.join(storage, 'storage')]
+
+    # Static files folders (core and extensions)
+    public_folder = config.get(u'ckan.base_public_folder')
+    app.static_folder = config.get(
+        'extra_public_paths', ''
+    ).split(',') + [os.path.join(root, public_folder)] + storage_folder
+
     app.jinja_options = jinja_extensions.get_jinja_env_options()
+    app.jinja_env.policies['ext.i18n.trimmed'] = True
 
     app.debug = debug
     app.testing = testing
@@ -96,7 +127,6 @@ def make_flask_stack(conf, **app_conf):
         app.config.update(config)
     else:
         app.config.update(conf)
-        app.config.update(app_conf)
 
     # Do all the Flask-specific stuff before adding other middlewares
 
@@ -107,14 +137,31 @@ def make_flask_stack(conf, **app_conf):
         raise RuntimeError(u'You must provide a value for the secret key'
                            ' with the SECRET_KEY config option')
 
+    root_path = config.get('ckan.root_path', None)
     if debug:
         from flask_debugtoolbar import DebugToolbarExtension
         app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-        DebugToolbarExtension(app)
+        debug_ext = DebugToolbarExtension()
+
+        # register path that includes `ckan.site_root` before
+        # initializing debug app. In such a way, our route receives
+        # higher precedence.
+
+        # TODO: After removal of Pylons code, switch to
+        # `APPLICATION_ROOT` config value for flask application. Right
+        # now it's a bad option because we are handling both pylons
+        # and flask urls inside helpers and splitting this logic will
+        # bring us tons of headache.
+        if root_path:
+            app.add_url_rule(
+                root_path.replace('{{LANG}}', '').rstrip('/') +
+                '/_debug_toolbar/static/<path:filename>',
+                '_debug_toolbar.static', debug_ext.send_static_file
+            )
+        debug_ext.init_app(app)
 
         from werkzeug.debug import DebuggedApplication
-        app = DebuggedApplication(app, True)
-        app = app.app
+        app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.DEBUG)
@@ -134,7 +181,7 @@ def make_flask_stack(conf, **app_conf):
                     if k.startswith(namespace)}
     if (not session_opts.get('session.data_dir') and
             session_opts.get('session.type', 'file') == 'file'):
-        cache_dir = app_conf.get('cache_dir') or app_conf.get('cache.dir')
+        cache_dir = conf.get('cache_dir') or conf.get('cache.dir')
         session_opts['session.data_dir'] = '{data_dir}/sessions'.format(
             data_dir=cache_dir)
 
@@ -162,7 +209,11 @@ def make_flask_stack(conf, **app_conf):
         return dict(ungettext=ungettext)
 
     # Babel
-    pairs = [(os.path.join(root, u'i18n'), 'ckan')] + [
+    _ckan_i18n_dir = i18n.get_ckan_i18n_dir()
+
+    pairs = [
+        (_ckan_i18n_dir, u'ckan')
+    ] + [
         (p.i18n_directory(), p.i18n_domain())
         for p in PluginImplementations(ITranslation)
     ]
@@ -197,6 +248,9 @@ def make_flask_stack(conf, **app_conf):
     lib_plugins.register_group_blueprints(app)
 
     # Set flask routes in named_routes
+    # TODO: refactor whatever helper is using this to not do it
+    if 'routes.named_routes' not in config:
+        config['routes.named_routes'] = {}
     for rule in app.url_map.iter_rules():
         if '.' not in rule.endpoint:
             continue
@@ -217,8 +271,8 @@ def make_flask_stack(conf, **app_conf):
         app = plugin.make_middleware(app, config)
 
     # Fanstatic
-    fanstatic_enable_rollup = asbool(app_conf.get('fanstatic_enable_rollup',
-                                                  False))
+    fanstatic_enable_rollup = asbool(
+        conf.get('fanstatic_enable_rollup', False))
     if debug:
         fanstatic_config = {
             'versioning': True,
@@ -237,7 +291,7 @@ def make_flask_stack(conf, **app_conf):
             'bundle': True,
             'rollup': fanstatic_enable_rollup,
         }
-    root_path = config.get('ckan.root_path', None)
+
     if root_path:
         root_path = re.sub('/{{LANG}}', '', root_path)
         fanstatic_config['base_url'] = root_path
@@ -253,7 +307,7 @@ def make_flask_stack(conf, **app_conf):
 
     # Initialize repoze.who
     who_parser = WhoConfig(conf['here'])
-    who_parser.parse(open(app_conf['who.config_file']))
+    who_parser.parse(open(conf['who.config_file']))
 
     app = PluggableAuthenticationMiddleware(
         app,
@@ -273,6 +327,12 @@ def make_flask_stack(conf, **app_conf):
     flask_config_keys = set(flask_app.config.keys()) - set(config.keys())
     for key in flask_config_keys:
         config[key] = flask_app.config[key]
+
+    if six.PY3:
+        app = I18nMiddleware(app)
+
+        if asbool(config.get('ckan.tracking_enabled', 'false')):
+            app = TrackingMiddleware(app, config)
 
     # Add a reference to the actual Flask app so it's easier to access
     app._wsgi_app = flask_app
@@ -305,6 +365,7 @@ def ckan_before_request():
     # with extensions
     set_controller_and_action()
 
+    set_ckan_current_url(request.environ)
     g.__timer = time.time()
 
 
@@ -320,8 +381,11 @@ def ckan_after_request(response):
     # Set CORS headers if necessary
     response = set_cors_headers_for_response(response)
 
+    # Set Cache Control headers
+    response = set_cache_control_headers_for_response(response)
+
     r_time = time.time() - g.__timer
-    url = request.environ['CKAN_CURRENT_URL'].split('?')[0]
+    url = request.environ['PATH_INFO']
 
     log.info(' %s render time %.3f seconds' % (url, r_time))
 
@@ -367,7 +431,7 @@ class CKAN_AppCtxGlobals(_AppCtxGlobals):
         return getattr(app_globals.app_globals, name)
 
 
-class CKANFlask(Flask):
+class CKANFlask(MultiStaticFlask):
 
     '''Extend the Flask class with a special method called on incoming
      requests by AskAppDispatcherMiddleware.
@@ -449,9 +513,11 @@ def _register_error_handler(app):
     def error_handler(e):
         log.error(e, exc_info=sys.exc_info)
         if isinstance(e, HTTPException):
-            extra_vars = {u'code': [e.code], u'content': e.description}
-            # TODO: Remove
-            g.code = [e.code]
+            extra_vars = {
+                u'code': e.code,
+                u'content': e.description,
+                u'name': e.name
+            }
 
             return base.render(
                 u'error_document_template.html', extra_vars), e.code

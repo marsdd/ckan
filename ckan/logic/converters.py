@@ -54,7 +54,7 @@ def free_tags_only(key, data, errors, context):
     tag_number = key[1]
     if not data.get(('tags', tag_number, 'vocabulary_id')):
         return
-    for k in data.keys():
+    for k in list(data.keys()):
         if k[0] == 'tags' and k[1] == tag_number:
             del data[k]
 
@@ -190,6 +190,30 @@ def convert_to_list_if_string(value, context=None):
         return [value]
     else:
         return value
+
+def json_or_string(value):
+    """
+    parse string values as json, return string if that fails
+    """
+    if isinstance(value, string_types):
+        try:
+            return json.loads(value)
+        except ValueError:
+            pass
+    return value
+
+def json_list_or_string(value):
+    """
+    parse string values as json or comma-separated lists, return
+    string as a one-element list if that fails
+    """
+    if isinstance(value, string_types):
+        try:
+            return json.loads(value)
+        except ValueError:
+            pass
+        return value.split(',')
+    return value
 
 
 def remove_whitespace(value, context):

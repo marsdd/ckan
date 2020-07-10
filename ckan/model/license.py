@@ -7,8 +7,8 @@ import requests
 
 from ckan.common import config
 from ckan.common import asbool
+import six
 from six import text_type, string_types
-from six.moves import map
 
 from ckan.common import _, json
 import ckan.lib.maintain as maintain
@@ -35,11 +35,13 @@ class License(object):
             if key == 'date_created':
                 # Parse ISO formatted datetime.
                 value = datetime.datetime(
-                    *list(int(item) for item in re.split('[^\d]', value)))
+                    *list(int(item) for item in re.split(r'[^\d]', value)))
                 self._data[key] = value
             elif isinstance(value, str):
-                # Convert str to unicode (keeps Pylons and SQLAlchemy happy).
-                value = value.decode('utf8')
+                if six.PY2:
+                    # Convert str to unicode
+                    # (keeps Pylons and SQLAlchemy happy).
+                    value = six.ensure_text(value)
                 self._data[key] = value
 
     def __getattr__(self, name):
@@ -51,7 +53,12 @@ class License(object):
             log.warn('license.is_osi_compliant is deprecated - use '
                      'osd_conformance instead.')
             return self._data['osd_conformance'] == 'approved'
-        return self._data[name]
+        try:
+            return self._data[name]
+        except KeyError as e:
+            # Python3 strictly requires `AttributeError` for correct
+            # behavior of `hasattr`
+            raise AttributeError(*e.args)
 
     @maintain.deprecated("License.__getitem__() is deprecated and will be "
                          "removed in a future version of CKAN. Instead, "
@@ -215,7 +222,7 @@ class DefaultLicense(dict):
             else:
                 return value
         else:
-            raise KeyError()
+            raise KeyError(key)
 
     def copy(self):
         ''' create a dict of the license used by the licenses api '''

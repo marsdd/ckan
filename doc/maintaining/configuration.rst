@@ -58,10 +58,11 @@ details on how to do this check :doc:`/extensions/remote-config-update`.
 CKAN configuration file
 ***********************
 
-By default, the
-configuration file is located at ``/etc/ckan/default/development.ini`` or
-``/etc/ckan/default/production.ini``. This section documents all of the config file
-settings, for reference.
+From CKAN 2.9, by default, the configuration file is located at
+``/etc/ckan/default/ckan.ini``. Previous releases the configuration file(s)
+were:  ``/etc/ckan/default/development.ini`` or
+``/etc/ckan/default/production.ini``. This section documents all of the config
+file settings, for reference.
 
 .. note:: After editing your config file, you need to restart your webserver
    for the changes to take effect.
@@ -103,8 +104,24 @@ Example::
 
 Default value: ``False``
 
-This enables Pylons' interactive debugging tool, makes Fanstatic serve unminified JS and CSS
-files, and enables CKAN templates' debugging features.
+This enables the `Flask-DebugToolbar
+<https://flask-debugtoolbar.readthedocs.io/>`_ in the web interface, makes
+Webassets serve unminified JS and CSS files, and enables CKAN templates'
+debugging features.
+
+You will need to ensure the ``Flask-DebugToolbar`` python package is installed,
+by activating your ckan virtual environment and then running::
+
+    pip install -r /usr/lib/ckan/default/src/ckan/dev-requirements.txt
+
+If you are running CKAN on Apache, you must change the WSGI
+configuration to run a single process of CKAN. Otherwise
+the execution will fail with: ``AssertionError: The EvalException
+middleware is not usable in a multi-process environment``. Eg. change::
+
+  WSGIDaemonProcess ckan_default display-name=ckan_default processes=2 threads=15
+  to
+  WSGIDaemonProcess ckan_default display-name=ckan_default threads=15
 
 .. warning:: This option should be set to ``False`` for a public site.
    With debug mode enabled, a visitor to your site could execute malicious
@@ -125,6 +142,52 @@ maintain compatibility.
 
   .. warning:: This configuration will be removed when migration to Flask is completed. Please
     update the extension code to use the new Flask-based route names.
+
+
+Development Settings
+--------------------
+
+.. _ckan.devserver.threaded:
+
+ckan.devserver.threaded
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.devserver.threaded = true
+
+Default value: False
+
+Controls, whether development server handle each request in a separate
+thread.
+
+.. _ckan.devserver.multiprocess:
+
+ckan.devserver.multiprocess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.devserver.multiprocess = 8
+
+Default value: 1
+
+If greater than 1 then handle each request in a new process up to this
+maximum number of concurrent processes.
+
+.. _ckan.devserver.watch_patterns:
+
+ckan.devserver.watch_patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.devserver.watch_patterns = mytheme/**/*.yaml mytheme/**/*.json
+
+Default value: None
+
+A list of files the reloader should watch additionally to the
+modules. For example configuration files.
 
 Repoze.who Settings
 -------------------
@@ -170,6 +233,21 @@ Default value: False
 This determines whether the secure flag will be set for the repoze.who
 authorization cookie. If ``True``, the cookie will be sent over HTTPS. The
 default in the absence of the setting is ``False``.
+
+.. _who.samesite:
+
+who.samesite
+^^^^^^^^^^^^
+
+Example::
+
+ who.samesite = Strict
+
+Default value: Lax
+
+This determines whether the SameSite flag will be set for the repoze.who
+authorization cookie. Allowed values are ``Lax`` (the default one), ``Strict`` or ``None``.
+If set to ``None``,  ``who.secure`` must be set to ``True``.
 
 
 Database Settings
@@ -384,9 +462,9 @@ Example::
 
   ckan.cache_enabled = True
 
-Default value: ``None``
+Default value: ``False``
 
-Controls if we're caching CKAN's static files, if it's serving them.
+This enables cache control headers on all requests. If the user is not logged in and there is no session data a ``Cache-Control: public`` header will be added. For all other requests the ``Cache-control: private`` header will be added.
 
 .. _ckan.use_pylons_response_cleanup_middleware:
 
@@ -607,7 +685,7 @@ Example::
 Default value: ``admin``
 
 
-Makes role permissions apply to all the groups down the hierarchy from the groups that the role is applied to.
+Makes role permissions apply to all the groups or organizations down the hierarchy from the groups or organizations that the role is applied to.
 
 e.g. a particular user has the 'admin' role for group 'Department of Health'. If you set the value of this option to 'admin' then the user will automatically have the same admin permissions for the child groups of 'Department of Health' such as 'Cancer Research' (and its children too and so on).
 
@@ -636,15 +714,148 @@ ckan.auth.public_activity_stream_detail
 
 Example::
 
-  ckan.auth.public_activity_stream_detail = true
+  ckan.auth.public_activity_stream_detail = True
 
 Default value: ``False`` (however the default config file template sets it to ``True``)
 
 Restricts access to 'view this version' and 'changes' in the Activity Stream pages. These links provide users with the full edit history of datasets etc - what they showed in the past and the diffs between versions. If this option is set to ``False`` then only admins (e.g. whoever can edit the dataset) can see this detail. If set to ``True``, anyone can see this detail (assuming they have permission to view the dataset etc).
 
 
+.. _ckan.auth.allow_dataset_collaborators:
+
+ckan.auth.allow_dataset_collaborators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.auth.allow_dataset_collaborators = True
+
+Default value: ``False``
+
+Enables or disable collaborators in individual datasets. If ``True``, in addition to the standard organization based permissions, users can be added as collaborators to individual datasets with different roles, regardless of the organization they belong to. For more information, check the documentation on :ref:`dataset_collaborators`.
+
+.. warning:: If this setting is turned off in a site where there already were collaborators created, you must reindex all datasets to update the permission labels, in order to prevent access to private datasets to the previous collaborators.
+
+.. _ckan.auth.allow_admin_collaborators:
+
+ckan.auth.allow_admin_collaborators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.auth.allow_admin_collaborators = True
+
+Default value: ``False``
+
+
+Allows dataset collaborators to have the "Admin" role, allowing them to add more collaborators or remove existing ones. By default collaborators can only be managed by administrators of the organization the dataset belongs to. For more information, check the documentation on :ref:`dataset_collaborators`.
+
+
+.. warning:: If this setting is turned off in a site where admin collaborators have been already created, existing collaborators with role "admin" will no longer be able to add or remove collaborators, but they will still be able to edit and access the datasets that they are assinged to.
+
+.. _ckan.auth.allow_collaborators_to_change_owner_org:
+
+ckan.auth.allow_collaborators_to_change_owner_org
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.auth.allow_collaborators_to_change_owner_org = True
+
+Default value: ``False``
+
+
+Allows dataset collaborators to change the owner organization of the datasets they are collaborators on. Defaults to False, meaning that collaborators with role admin or editor can edit the dataset metadata but not the organization field.
+
+.. _ckan.auth.create_default_api_keys:
+
+ckan.auth.create_default_api_keys
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  ckan.auth.create_default_api_keys = True
+
+Default value: ``False``
+
+
+Determines if a an API key should be automatically created for every user when creating a user account. If set to False (the default value), users can manually create an API token from their profile instead. See :ref:`api authentication`: for more details.
+
+
 .. end_config-authorization
 
+.. _config-api-tokens:
+
+API Token Settings
+------------------
+
+.. _api_token.nbytes:
+
+api_token.nbytes
+^^^^^^^^^^^^^^^^
+
+Example::
+
+  api_token.nbytes = 20
+
+Default value: 32
+
+Number of bytes used to generate unique id for API Token.
+
+.. _api_token.jwt.encode.secret:
+
+api_token.jwt.encode.secret
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  api_token.jwt.encode.secret = file:/path/to/private/key
+
+Default value: same as ``beaker.session.secret`` config option with ``string:`` type.
+
+A key suitable for the chosen algorithm(``api_token.jwt.algorithm``):
+
+* for asymmetric algorithms: path to private key with ``file:`` prefix. I.e ``file:/path/private/key``
+* for symmetric algorithms: plain string, sufficiently long for security with ``string:`` prefix. I.e ``string:123abc``
+
+Value must have prefix, which defines its type. Supported prefixes are:
+
+* ``string:`` - Plain string, will be used as is.
+* ``file:`` - Path to file. Content of the file will be used as key.
+
+.. _api_token.jwt.decode.secret:
+
+api_token.jwt.decode.secret
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  api_token.jwt.decode.secret = file:/path/to/public/key.pub
+
+Default value: same as ``beaker.session.secret`` config option with ``string:`` type.
+
+A key suitable for the chosen algorithm(``api_token.jwt.algorithm``):
+
+* for asymmetric algorithms: path to public key with ``file:`` prefix. I.e ``file:/path/public/key.pub``
+* for symmetric algorithms: plain string, sufficiently long for security with ``string:`` prefix. I.e ``string:123abc``
+
+Value must have prefix, which defines it's type. Supported prefixes are:
+
+* ``string:`` - Plain string, will be used as is.
+* ``file:`` - Path to file. Content of the file will be used as key.
+
+.. _api_token.jwt.algorithm:
+
+api_token.jwt.algorithm
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+  api_token.jwt.algorithm = RS256
+
+Default value: ``HS256``
+
+Algorithm to sign the token with, e.g. "ES256", "RS256"
 
 Search Settings
 ---------------
@@ -743,6 +954,21 @@ Default value:  ``true``
 Controls whether the default search page (``/dataset``) should include
 private datasets visible to the current user or only public datasets
 visible to everyone.
+
+.. _ckan.search.default_package_sort:
+
+ckan.search.default_package_sort
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+ ckan.search.default_package_sort = "name asc"
+
+Default value:  ``score desc, metadata_modified desc``
+
+Controls whether the default search page (``/dataset``) should different
+sorting parameter by default when the request does not specify sort.
+
 
 .. _search.facets.limit:
 
@@ -1215,6 +1441,20 @@ Defines a list of organization names or ids. This setting is used to display
 an organization and datasets on the home page in the default templates (1
 group and 2 datasets are displayed).
 
+.. _ckan.default_group_sort:
+
+ckan.default_group_sort
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Example::
+
+ ckan.default_group_sort = name
+
+Default Value: 'title'
+
+Defines if some other sorting is used in group_list and organization_list
+by default when the request does not specify sort.
+
 .. _ckan.gravatar_default:
 
 ckan.gravatar_default
@@ -1222,11 +1462,13 @@ ckan.gravatar_default
 
 Example::
 
-  ckan.gravatar_default = monsterid
+  ckan.gravatar_default = disabled
 
 Default value: ``identicon``
 
-This controls the default gravatar avatar, in case the user has none.
+This controls the default gravatar style. Gravatar is used by default when a user has not set a custom profile picture, 
+but it can be turn completely off by setting this option to "disabled". In that case, a placeholder image will be shown
+instead, which can be customized overriding the ``templates/user/snippets/placeholder.html`` template.
 
 .. _ckan.debug_supress_header:
 
@@ -1925,6 +2167,10 @@ This setting is used to construct URLs inside CKAN. It specifies two things:
 
     The host of your CKAN installation can be set via :ref:`ckan.site_url`.
 
+The CKAN repoze config file ``who.ini`` file will also need to be edited
+by adding the path prefix to the options in the ``[plugin:friendlyform]``
+section: ``login_form_url``, ``post_login_url`` and ``post_logout_url``.
+Do not change the login/logout_handler_path options.
 
 .. _ckan.resource_formats:
 
