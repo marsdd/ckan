@@ -56,12 +56,20 @@ RUN mkdir -p $CKAN_VENV $CKAN_CONFIG $CKAN_STORAGE_PATH && \
 RUN ckan-pip install -e git+https://github.com/ckan/ckanext-googleanalytics.git#egg=ckanext-googleanalytics && \
   ckan-pip install -r $CKAN_VENV/src/ckanext-googleanalytics/requirements.txt
 
-# Setup CKAN
-ADD . $CKAN_VENV/src/ckan/
+
+ADD ./requirement-setuptools.txt /ckan-temp/requirement-setuptools.txt
+ADD ./requirements-py2.txt /ckan-temp/requirements-py2.txt
 RUN ckan-pip install -U pip && \
-  ckan-pip install --upgrade --no-cache-dir -r $CKAN_VENV/src/ckan/requirement-setuptools.txt && \
-  ckan-pip install --upgrade --no-cache-dir -r $CKAN_VENV/src/ckan/requirements-py2.txt && \
-  ckan-pip install -e $CKAN_VENV/src/ckan/ && \
+  ckan-pip install --upgrade --no-cache-dir -r /ckan-temp/requirement-setuptools.txt && \
+  ckan-pip install --upgrade --no-cache-dir -r /ckan-temp/requirements-py2.txt
+
+RUN rm -Rf /ckan-temp
+# Setup CKAN
+# I didn't add ckanext-pages to this because it uses different mechanism for database updates.  I prefer it to use
+# same alembic, but it doesn't do that, it does it live as it's loading the module for the first time, it works, but not the best.
+# this should change.
+ADD . $CKAN_VENV/src/ckan/
+RUN ckan-pip install -e $CKAN_VENV/src/ckan/ && \
   ckan-pip install https://github.com/marsdd/ckanext-marsavin/archive/$MARS_PLUGIN_VERSION.zip && \
   ckan-pip install https://github.com/marsdd/ckanext-multilang/archive/$MARS_MULTILANG_PLUGIN_VERSION.zip && \
   ln -s $CKAN_VENV/src/ckan/ckan/config/who.ini $CKAN_CONFIG/who.ini && \
@@ -73,4 +81,4 @@ ENTRYPOINT ["/ckan-entrypoint.sh"]
 
 USER ckan
 
-CMD ["/usr/lib/ckan/venv/bin/ckan","jobs","worker"]
+CMD ["ckan","jobs","worker"]
