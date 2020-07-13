@@ -49,7 +49,7 @@ set_environment() {
 }
 
 write_config() {
-  ckan-paster make-config --no-interactive ckan "$CONFIG"
+  ckan generate config "$CONFIG"
 }
 
 # Wait for PostgreSQL
