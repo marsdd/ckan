@@ -72,6 +72,7 @@ ADD . $CKAN_VENV/src/ckan/
 RUN ckan-pip install -e $CKAN_VENV/src/ckan/ && \
   ckan-pip install https://github.com/marsdd/ckanext-marsavin/archive/$MARS_PLUGIN_VERSION.zip && \
   ckan-pip install https://github.com/marsdd/ckanext-multilang/archive/$MARS_MULTILANG_PLUGIN_VERSION.zip && \
+  ckan-pip install https://github.com/marsdd/ckanext-pages/archive/$MARS_PAGES_PLUGIN_VERSION.zip && \
   ln -s $CKAN_VENV/src/ckan/ckan/config/who.ini $CKAN_CONFIG/who.ini && \
   cp -v $CKAN_VENV/src/ckan/contrib/docker/ckan-bg/ckan-entrypoint.sh /ckan-entrypoint.sh && \
   chmod +x /ckan-entrypoint.sh && \
