@@ -42,6 +42,7 @@ ENV CKAN_INI=/etc/ckan/production.ini
 ARG CKAN_SITE_URL
 ARG MARS_PLUGIN_VERSION
 ARG MARS_MULTILANG_PLUGIN_VERSION
+ARG MARS_PAGES_PLUGIN_VERSION
 
 # Create ckan user
 RUN useradd -r -u 900 -m -c "ckan account" -d $CKAN_HOME -s /bin/false ckan
