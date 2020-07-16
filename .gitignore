@@ -52,4 +52,5 @@ cypress.env.json
 #python virtualenv
 venv
 var
+venv-py2
 
