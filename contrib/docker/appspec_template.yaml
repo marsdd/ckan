@@ -7,7 +7,6 @@ Resources:
         LoadBalancerInfo:
           ContainerName: "$CONTAINER_NAME"
           ContainerPort: "5000"
-        PlatformVersion: "LATEST"
         NetworkConfiguration:
           AwsvpcConfiguration:
             Subnets: ["$SUBNET_1","$SUBNET_2"]
