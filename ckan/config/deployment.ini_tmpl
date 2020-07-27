@@ -131,7 +131,7 @@ ckan.cache_expires = 600
 #       Add ``datapusher`` to enable DataPusher
 #		Add ``resource_proxy`` to enable resorce proxying and get around the
 #		same origin policy
-ckan.plugins = stats text_view image_view recline_view datastore datapusher googleanalytics marsavin marsavinResource marsavinPackage MarsavinRequestAccess multilang pages
+ckan.plugins = stats text_view image_view recline_view datastore datapusher googleanalytics marsavin marsavinResource marsavinPackage MarsavinRequestAccess multilang
 # ckan.plugins = stats text_view image_view recline_view
 
 # Define which views should be created by default
