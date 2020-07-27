@@ -61,7 +61,7 @@ To install {{ cookiecutter.project }}:
 
 3. Add ``{{ cookiecutter.project[8:] }}`` to the ``ckan.plugins`` setting in your CKAN
    config file (by default the config file is located at
-   ``/etc/ckan/default/production.ini``).
+   ``/etc/ckan/default/ckan.ini``).
 
 4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
@@ -100,12 +100,12 @@ Tests
 
 To run the tests, do::
 
-    nosetests --nologcapture --with-pylons=test.ini
+    pytest --ckan-ini=test.ini
 
 To run the tests and produce a coverage report, first make sure you have
-coverage installed in your virtualenv (``pip install coverage``) then run::
+``pytest-cov`` installed in your virtualenv (``pip install pytest-cov``) then run::
 
-    nosetests --nologcapture --with-pylons=test.ini --with-coverage --cover-package=ckanext.{{ cookiecutter.project_shortname }} --cover-inclusive --cover-erase --cover-tests
+    pytest --ckan-ini=test.ini  --cov=ckanext.{{ cookiecutter.project_shortname }}
 
 
 ----------------------------------------
@@ -136,6 +136,7 @@ To publish a new version to PyPI follow these steps:
 5. Commit any outstanding changes::
 
        git commit -a
+       git push
 
 6. Tag the new release of the project on GitHub with the version number from
    the ``setup.py`` file. For example if the version number in ``setup.py`` is

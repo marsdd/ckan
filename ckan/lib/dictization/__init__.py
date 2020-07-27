@@ -24,6 +24,7 @@ except NameError:
 # and saving dictized objects. If a specialised use is needed please do NOT extend
 # these functions.  Copy code from here as needed.
 
+legacy_dict_sort = lambda x: (len(x), dict.items(x))
 
 def table_dictize(obj, context, **kw):
     '''Get any model object and represent it as a dict'''
@@ -72,7 +73,7 @@ def table_dictize(obj, context, **kw):
     return result_dict
 
 
-def obj_list_dictize(obj_list, context, sort_key=lambda x:x):
+def obj_list_dictize(obj_list, context, sort_key=legacy_dict_sort):
     '''Get a list of model object and represent it as a list of dicts'''
 
     result_list = []
@@ -114,7 +115,7 @@ def get_unique_constraints(table, context):
 
     return list_of_constraints
 
-def table_dict_save(table_dict, ModelClass, context):
+def table_dict_save(table_dict, ModelClass, context, extra_attrs=()):
     '''Given a dict and a model class, update or create a sqlalchemy object.
     This will use an existing object if "id" is supplied OR if any unique
     constraints are met. e.g supplying just a tag name will get out that tag obj.
@@ -147,10 +148,10 @@ def table_dict_save(table_dict, ModelClass, context):
     if not obj:
         obj = ModelClass()
 
-    for key, value in six.iteritems(table_dict):
-        if isinstance(value, list):
-            continue
-        setattr(obj, key, value)
+    obj.from_dict(table_dict)
+    for a in extra_attrs:
+        if a in table_dict:
+            setattr(obj, a, table_dict[a])
 
     session.add(obj)
 

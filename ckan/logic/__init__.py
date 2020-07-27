@@ -5,6 +5,7 @@ import logging
 import re
 from collections import defaultdict
 
+from werkzeug.local import LocalProxy
 import six
 from six import string_types, text_type
 
@@ -34,7 +35,10 @@ class ActionError(Exception):
         super(ActionError, self).__init__(message)
 
     def __str__(self):
-        return self.message
+        msg = self.message
+        if not isinstance(msg, six.string_types):
+            msg = str(msg)
+        return six.ensure_text(msg)
 
 
 class NotFound(ActionError):
@@ -74,7 +78,8 @@ class ValidationError(ActionError):
                     tag_errors.append(', '.join(error['name']))
                 except KeyError:
                     # e.g. if it is a vocabulary_id error
-                    tag_errors.append(error)
+                    if error:
+                        tag_errors.append(error)
             error_dict['tags'] = tag_errors
         self.error_dict = error_dict
         self._error_summary = error_summary
@@ -230,6 +235,9 @@ def _prepopulate_context(context):
         context.setdefault('user', c.user)
     except AttributeError:
         # c.user not set
+        pass
+    except RuntimeError:
+        # Outside of request context
         pass
     except TypeError:
         # c not registered
@@ -393,7 +401,7 @@ def get_action(action):
         for part in module_path.split('.')[1:]:
             module = getattr(module, part)
         for k, v in module.__dict__.items():
-            if not k.startswith('_'):
+            if not k.startswith('_') and not isinstance(v, LocalProxy):
                 # Only load functions from the action module or already
                 # replaced functions.
                 if (hasattr(v, '__call__') and

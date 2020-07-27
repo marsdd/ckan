@@ -23,19 +23,23 @@ from ckan.common import config
 log = logging.getLogger(__name__)
 
 
+def _get_extensions():
+    return ['jinja2.ext.do', 'jinja2.ext.with_',
+            SnippetExtension,
+            CkanExtend,
+            CkanInternationalizationExtension,
+            LinkForExtension,
+            ResourceExtension,
+            UrlForStaticExtension,
+            UrlForExtension,
+            AssetExtension]
+
+
 def get_jinja_env_options():
     return dict(
         loader=CkanFileSystemLoader(config['computed_template_paths']),
         autoescape=True,
-        extensions=['jinja2.ext.do', 'jinja2.ext.with_',
-                    SnippetExtension,
-                    CkanExtend,
-                    CkanInternationalizationExtension,
-                    LinkForExtension,
-                    ResourceExtension,
-                    UrlForStaticExtension,
-                    UrlForExtension,
-                    AssetExtension],
+        extensions=_get_extensions(),
     )
 
 
@@ -106,13 +110,13 @@ class CkanExtend(ext.Extension):
         node = nodes.Extends(lineno)
         template_path = parser.filename
         # find where in the search path this template is from
-        index = 0
+        current_path = None
         if not hasattr(self, 'searchpath'):
             return node
         for searchpath in self.searchpath:
             if template_path.startswith(searchpath):
+                current_path = searchpath
                 break
-            index += 1
 
         # get filename from full path
         filename = template_path[len(searchpath) + 1:]
@@ -128,8 +132,8 @@ class CkanExtend(ext.Extension):
                              % template_path)
 
         # provide our magic format
-        # format is *<search path parent index>*<template name>
-        magic_filename = '*' + str(index) + '*' + filename
+        # format is *<search path parent directory>*<template name>
+        magic_filename = '*' + current_path + '*' + filename
         # set template
         node.template = nodes.Const(magic_filename)
         return node
@@ -183,13 +187,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     def get_source(self, environment, template):
         # if the template name starts with * then this should be
         # treated specially.
-        # format is *<search path parent index>*<template name>
+        # format is *<search path parent directory>*<template name>
         # so we only search from then downwards.  This allows recursive
         # ckan_extends tags
         if template.startswith('*'):
             parts = template.split('*')
             template = parts[2]
-            searchpaths = self.searchpath[int(parts[1]) + 1:]
+            index = self.searchpath.index(parts[1])
+            searchpaths = self.searchpath[index + 1:]
         else:
             searchpaths = self.searchpath
         # end of ckan changes
@@ -229,7 +234,7 @@ class BaseExtension(ext.Extension):
 
     def parse(self, parser):
         stream = parser.stream
-        tag = stream.next()
+        tag = next(stream)
         # get arguments
         args = []
         kwargs = []
@@ -237,7 +242,7 @@ class BaseExtension(ext.Extension):
             if args or kwargs:
                 stream.expect('comma')
             if stream.current.test('name') and stream.look().test('assign'):
-                key = nodes.Const(stream.next().value)
+                key = nodes.Const(next(stream).value)
                 stream.skip()
                 value = parser.parse_expression()
                 kwargs.append(nodes.Pair(key, value, lineno=key.lineno))

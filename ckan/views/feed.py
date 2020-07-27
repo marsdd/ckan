@@ -8,8 +8,7 @@ import six
 from six import text_type
 from dateutil.tz import tzutc
 from feedgen.feed import FeedGenerator
-import webhelpers.feedgenerator
-from ckan.common import _, config, g, request, response
+from ckan.common import _, config, g, request
 import ckan.lib.helpers as h
 import ckan.lib.base as base
 import ckan.model as model
@@ -52,14 +51,14 @@ def _package_search(data_dict):
 
 
 def _enclosure(pkg):
-    enc = Enclosure(
-        h.url_for(
-            u'api.action',
-            logic_function=u'package_show',
-            id=pkg['name'],
-            ver=3,
-            _external=True),
+    url = h.url_for(
+        u'api.action',
+        logic_function=u'package_show',
+        id=pkg['name'],
+        ver=3,
+        _external=True
     )
+    enc = Enclosure(url)
     enc.type = u'application/json'
     enc.length = text_type(len(json.dumps(pkg)))
     return enc
@@ -74,7 +73,6 @@ def _set_extras(**kw):
 
 class Enclosure(text_type):
     def __init__(self, url):
-        super(Enclosure, self).__init__(url)
         self.url = url
         self.length = u'0'
         self.mime_type = u'application/json'
@@ -278,11 +276,11 @@ def group_or_organization(obj_dict, is_org):
         params,
         item_count=item_count,
         limit=data_dict['rows'],
-        controller=u'feed',
+        controller=u'feeds',
         action=group_type,
         id=obj_dict['name'])
     feed_url = _feed_url(
-        params, controller=u'feed', action=group_type, id=obj_dict['name'])
+        params, controller=u'feeds', action=group_type, id=obj_dict['name'])
     # site_title = SITE_TITLE
     if is_org:
         guid = _create_atom_id(
@@ -563,78 +561,6 @@ def _create_atom_id(resource_path, authority_name=None, date_string=None):
 
     tagging_entity = u','.join([authority_name, date_string])
     return u':'.join(['tag', tagging_entity, resource_path])
-
-
-class _FixedAtom1Feed(webhelpers.feedgenerator.Atom1Feed):
-    """
-    The Atom1Feed defined in webhelpers doesn't provide all the fields we
-    might want to publish.
-     * In Atom1Feed, each <entry> is created with identical <updated> and
-       <published> fields.  See [1] (webhelpers 1.2) for details.
-       So, this class fixes that by allow an item to set both an <updated> and
-       <published> field.
-     * In Atom1Feed, the feed description is not used.  So this class uses the
-       <subtitle> field to publish that.
-       [1] https://bitbucket.org/bbangert/webhelpers/src/f5867a319abf/\
-       webhelpers/feedgenerator.py#cl-373
-    """
-
-    def add_item(self, *args, **kwargs):
-        """
-        Drop the pubdate field from the new item.
-        """
-        if u'pubdate' in kwargs:
-            kwargs.pop(u'pubdate')
-        defaults = {u'updated': None, u'published': None}
-        defaults.update(kwargs)
-        super(_FixedAtom1Feed, self).add_item(*args, **defaults)
-
-    def latest_post_date(self):
-        """
-        Calculates the latest post date from the 'updated' fields,
-        rather than the 'pubdate' fields.
-        """
-        updates = [
-            item['updated'] for item in self.items
-            if item['updated'] is not None
-        ]
-        if not len(updates):  # delegate to parent for default behaviour
-            return super(_FixedAtom1Feed, self).latest_post_date()
-        return max(updates)
-
-    def add_item_elements(self, handler, item):
-        """
-        Add the <updated> and <published> fields to each entry that's written
-        to the handler.
-        """
-        super(_FixedAtom1Feed, self).add_item_elements(handler, item)
-
-        dfunc = webhelpers.feedgenerator.rfc3339_date
-
-        if (item['updated']):
-            handler.addQuickElement(u'updated',
-                                    dfunc(item['updated']).decode(u'utf-8'))
-
-        if (item['published']):
-            handler.addQuickElement(u'published',
-                                    dfunc(item['published']).decode(u'utf-8'))
-
-    def add_root_elements(self, handler):
-        """
-        Add additional feed fields.
-         * Add the <subtitle> field from the feed description
-         * Add links other pages of the logical feed.
-        """
-        super(_FixedAtom1Feed, self).add_root_elements(handler)
-
-        handler.addQuickElement(u'subtitle', self.feed['description'])
-
-        for page in [u'previous', u'next', u'first', u'last']:
-            if self.feed.get(page + u'_page', None):
-                handler.addQuickElement(u'link', u'', {
-                    u'rel': page,
-                    u'href': self.feed.get(page + u'_page')
-                })
 
 
 # Routing

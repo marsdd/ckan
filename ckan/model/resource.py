@@ -3,7 +3,7 @@
 import datetime
 
 from six import text_type
-from sqlalchemy.util import OrderedDict
+from collections import OrderedDict
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
 from ckan.common import config
@@ -24,7 +24,8 @@ __all__ = ['Resource', 'resource_table']
 
 CORE_RESOURCE_COLUMNS = ['url', 'format', 'description', 'hash', 'name',
                          'resource_type', 'mimetype', 'mimetype_inner',
-                         'size', 'created', 'last_modified', 'cache_url',
+                         'size', 'created', 'last_modified',
+                         'metadata_modified', 'cache_url',
                          'cache_last_updated', 'url_type']
 
 ##formally package_resource
@@ -34,19 +35,21 @@ resource_table = Table(
            default=_types.make_uuid),
     Column('package_id', types.UnicodeText,
            ForeignKey('package.id')),
-    Column('url', types.UnicodeText, nullable=False),
+    Column('url', types.UnicodeText, nullable=False, doc='remove_if_not_provided'),
+    # XXX: format doc='remove_if_not_provided' makes lots of tests fail, fix tests?
     Column('format', types.UnicodeText),
-    Column('description', types.UnicodeText),
+    Column('description', types.UnicodeText, doc='remove_if_not_provided'),
     Column('hash', types.UnicodeText),
     Column('position', types.Integer),
 
     Column('name', types.UnicodeText),
-    Column('resource_type', types.UnicodeText),
-    Column('mimetype', types.UnicodeText),
-    Column('mimetype_inner', types.UnicodeText),
+    Column('resource_type', types.UnicodeText, doc='remove_if_not_provided'),
+    Column('mimetype', types.UnicodeText, doc='remove_if_not_provided'),
+    Column('mimetype_inner', types.UnicodeText, doc='remove_if_not_provided'),
     Column('size', types.BigInteger),
     Column('created', types.DateTime, default=datetime.datetime.utcnow),
     Column('last_modified', types.DateTime),
+    Column('metadata_modified', types.DateTime, default=datetime.datetime.utcnow),
     Column('cache_url', types.UnicodeText),
     Column('cache_last_updated', types.DateTime),
     Column('url_type', types.UnicodeText),

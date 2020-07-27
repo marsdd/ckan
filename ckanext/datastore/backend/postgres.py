@@ -10,15 +10,14 @@ import sqlalchemy.engine.url as sa_url
 import datetime
 import hashlib
 import json
-from cStringIO import StringIO
+from collections import OrderedDict
 
 import six
 from six.moves.urllib.parse import (
     urlencode, unquote, urlunparse, parse_qsl, urlparse
 )
-from six import string_types, text_type
+from six import string_types, text_type, StringIO
 
-import ckan.lib.cli as cli
 import ckan.plugins as p
 import ckan.plugins.toolkit as toolkit
 from ckan.lib.lazyjson import LazyJSONObject
@@ -33,7 +32,7 @@ from sqlalchemy.exc import (ProgrammingError, IntegrityError,
 
 import ckan.model as model
 import ckan.plugins as plugins
-from ckan.common import config, OrderedDict
+from ckan.common import config
 
 from ckanext.datastore.backend import (
     DatastoreBackend,
@@ -286,7 +285,7 @@ def _get_fields(connection, resource_id):
     for field in all_fields.cursor.description:
         if not field[0].startswith('_'):
             fields.append({
-                'id': field[0].decode('utf-8'),
+                'id': six.ensure_text(field[0]),
                 'type': _get_type(connection, field[1])
             })
     return fields
@@ -332,7 +331,7 @@ def _pg_version_is_at_least(connection, version):
 
 
 def _get_read_only_user(data_dict):
-    parsed = cli.parse_db_config('ckan.datastore.read_url')
+    parsed = model.parse_db_config('ckan.datastore.read_url')
     return parsed['db_user']
 
 
@@ -677,7 +676,7 @@ def _insert_links(data_dict, limit, offset):
     # get the url from the request
     try:
         urlstring = toolkit.request.environ['CKAN_CURRENT_URL']
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, RuntimeError):
         return  # no links required for local actions
 
     # change the offset in the url
@@ -742,7 +741,7 @@ def convert(data, type_name):
         sub_type = type_name[1:]
         return [convert(item, sub_type) for item in data]
     if type_name == 'tsvector':
-        return text_type(data, 'utf-8')
+        return six.ensure_text(data)
     if isinstance(data, datetime.datetime):
         return data.isoformat()
     if isinstance(data, (int, float)):
@@ -1210,7 +1209,7 @@ def validate(context, data_dict):
         elif isinstance(values, (list, tuple)):
             value = values[0]
         elif isinstance(values, dict):
-            value = values.keys()[0]
+            value = list(values.keys())[0]
         else:
             value = values
 
@@ -1389,7 +1388,7 @@ def format_results(context, results, data_dict, rows_max):
     result_fields = []
     for field in results.cursor.description:
         result_fields.append({
-            'id': field[0].decode('utf-8'),
+            'id': six.ensure_text(field[0]),
             'type': _get_type(context['connection'], field[1])
         })
 
@@ -2086,5 +2085,5 @@ def _programming_error_summary(pe):
     ValidationError to send back to API users
     '''
     # first line only, after the '(ProgrammingError)' text
-    message = pe.args[0].split('\n')[0].decode('utf8')
+    message = six.ensure_text(pe.args[0].split('\n')[0])
     return message.split(u') ', 1)[-1]
