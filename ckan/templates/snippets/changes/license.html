@@ -3,7 +3,8 @@
     {# if both of them have URLs #}
     {% if change.new_url != "" and change.old_url != "" %}
 
-      {{ _('Changed the license of {pkg_link} to {new_link} (previously {old_link})').format(
+      {{ _('Changed the license of {pkg_link} to
+          {new_link} (previously {old_link})').format(
             pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
               pkg_url = h.url_for(controller='dataset',
                                   action='read', id=change.pkg_id),
@@ -22,7 +23,8 @@
     {# if only the new one has a URL #}
     {% elif change.new_url != "" and change.old_url == "" %}
 
-      {{ _('Changed the license of {pkg_link} to {new_link} (previously {old_title})').format(
+      {{ _('Changed the license of {pkg_link} to
+          {new_link} (previously {old_title})').format(
             pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
               pkg_url = h.url_for(controller='dataset',
                                   action='read', id=change.pkg_id),
@@ -38,7 +40,8 @@
     {# if only the old one has a URL #}
     {% elif change.new_url == "" and change.old_url != "" %}
 
-    {{ _('Changed the license of {pkg_link} to {new_title} (previously {old_link})').format(
+    {{ _('Changed the license of {pkg_link} to
+        {new_title} (previously {old_link})').format(
           pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
             pkg_url = h.url_for(controller='dataset',
                                 action='read', id=change.pkg_id),
@@ -55,7 +58,8 @@
     {% else %}
 
 
-      {{ _('Changed the license of {pkg_link} to {new_title} (previously {old_title})').format(
+      {{ _('Changed the license of {pkg_link} to
+          {new_title} (previously {old_title})').format(
             pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
               pkg_url = h.url_for(controller='dataset',
                                   action='read', id=change.pkg_id),

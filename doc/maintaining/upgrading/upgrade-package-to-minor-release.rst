@@ -86,9 +86,9 @@ respectively.
    See :ref:`rebuild search index` for details of the
    ``ckan search-index rebuild`` command.
 
-#. Finally, restart the web server and Nginx, eg for a CKAN package install running uWSGI:
+#. Finally, restart Apache and Nginx:
 
    .. parsed-literal::
 
-    |restart_uwsgi|
+    |restart_apache|
     sudo service nginx restart

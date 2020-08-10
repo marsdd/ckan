@@ -56,7 +56,8 @@ rst_epilog = '''
 .. |storage_parent_dir| replace:: /var/lib/ckan
 .. |storage_dir| replace:: |storage_parent_dir|/default
 .. |storage_path| replace:: |storage_parent_dir|/default
-.. |restart_uwsgi| replace:: sudo supervisorctl restart ckan-uwsgi:*
+.. |reload_apache| replace:: sudo systemctl reload apache2
+.. |restart_apache| replace:: sudo systemctl restart apache2
 .. |restart_solr| replace:: sudo service jetty8 restart
 .. |solr| replace:: Solr
 .. |restructuredtext| replace:: reStructuredText
@@ -245,14 +246,10 @@ def get_current_release_version():
     return version
 
 
-def get_latest_package_name(distro, py_version=None):
+def get_latest_package_name(distro='trusty'):
     '''Return the filename of the Ubuntu package for the latest stable release.
 
     e.g. "python-ckan_2.1-trusty_amd64.deb"
-
-    If ``py_version`` is provided, it's added as part of the iter number:
-
-    e.g. "python-ckan_2.9-py3-focal_amd64.deb"
 
     '''
     # We don't create a new package file name for a patch release like 2.1.1,
@@ -260,13 +257,8 @@ def get_latest_package_name(distro, py_version=None):
     # have the X.Y part of the version number in them, not X.Y.Z.
     latest_minor_version = get_latest_release_version()[:3]
 
-    if py_version:
-        name = 'python-ckan_{version}-py{py_version}-{distro}_amd64.deb'.format(
-            version=latest_minor_version, distro=distro, py_version=py_version)
-    else:
-        name = 'python-ckan_{version}-{distro}_amd64.deb'.format(
-            version=latest_minor_version, distro=distro)
-    return name
+    return 'python-ckan_{version}-{distro}_amd64.deb'.format(
+        version=latest_minor_version, distro=distro)
 
 
 def get_min_setuptools_version():
@@ -320,9 +312,10 @@ is_latest_version = version == latest_release_version
 write_substitutions_file(
     latest_release_tag=latest_release_tag_value,
     latest_release_version=latest_release_version,
+    latest_package_name_precise=get_latest_package_name('precise'),
+    latest_package_name_trusty=get_latest_package_name('trusty'),
+    latest_package_name_xenial=get_latest_package_name('xenial'),
     latest_package_name_bionic=get_latest_package_name('bionic'),
-    latest_package_name_focal_py2=get_latest_package_name('focal', py_version=2),
-    latest_package_name_focal_py3=get_latest_package_name('focal', py_version=3),
     min_setuptools_version=get_min_setuptools_version(),
 )
 

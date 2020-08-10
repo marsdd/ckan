@@ -8,23 +8,90 @@ installed, we need to install and configure Solr.
 
 .. note::
 
-   These instructions explain how to deploy Solr using the Tomcat web
-   server, but CKAN doesn't require Tomcat - you can deploy Solr to another web
-   server, such as Jetty, if that's convenient on your operating system.
+   These instructions explain how to deploy Solr using the Jetty web
+   server, but CKAN doesn't require Jetty - you can deploy Solr to another web
+   server, such as Tomcat, if that's convenient on your operating system.
 
-#. Change the default port Tomcat runs on (8080) to the one expected by CKAN. To do so change the following line in the ``/etc/tomcat9/server.xml`` file (``tomcat8`` in older Ubuntu versions)::
+.. tip::
 
-        From:
+   Do this step only if you are using Ubuntu 18.04.
 
-        <Connector port="8080" protocol="HTTP/1.1"
+   Ubuntu 18.04 64-bit uses ``jetty9`` which does not observe the symlink created
+   by the Solr package. As a result, Jetty is unable to serve Solr content. To
+   fix this, create the symlink in the ``/var/lib/jetty9/webapps/`` directory::
+
+    sudo ln -s /etc/solr/solr-jetty.xml /var/lib/jetty9/webapps/solr.xml
+
+   The Jetty port value must also be changed on ``jetty9``. To do that, edit the
+   ``jetty.port`` value in ``/etc/jetty9/start.ini``::
+
+    jetty.port=8983  # (line 23)
+
+#. Edit the Jetty configuration file (``/etc/default/jetty8(9)`` or
+   ``/etc/default/jetty``) and change the following variables::
+
+    NO_START=0            # (line 4)
+    JETTY_HOST=127.0.0.1  # (line 16)
+    JETTY_PORT=8983       # (line 19)
+
+   .. note::
+
+    This ``JETTY_HOST`` setting will only allow connections from the same machine.
+    If CKAN is not installed on the same machine as Jetty/Solr you will need to
+    change it to the relevant host or to 0.0.0.0 (and probably set up your firewall
+    accordingly).
+
+   Start or restart the Jetty server.
+
+   For Ubuntu 18.04::
+
+    sudo service jetty9 restart
+
+   For Ubuntu 16.04::
+
+    sudo service jetty8 restart
+
+   .. note::
+
+    Ignore any warning that it wasn't already running - some Ubuntu
+    distributions choose not to start Jetty on install, but it's not important.
+
+   You can test Solr responds correctly like this (you may need to install curl
+   first)::
+
+        $ curl http://localhost:8983/solr/
+
+        <html>
+        <head>
+        <link rel="stylesheet" type="text/css" href="solr-admin.css">
+        <link rel="icon" href="favicon.ico" type="image/ico"></link>
+        <link rel="shortcut icon" href="favicon.ico" type="image/ico"></link>
+        <title>Welcome to Solr</title>
+        </head>
+
+        <body>
+        <h1>Welcome to Solr!</h1>
+        <a href="."><img border="0" align="right" height="78" width="142" src="admin/solr_small.png" alt="Solr"/></a>
 
 
-        To:
-
-        <Connector port="8983" protocol="HTTP/1.1"
+        <a href="admin/">Solr Admin</a>
 
 
-   .. note:: This is not required by CKAN, you can keep the default Tomcat port or use a different one, just make sure to update the :ref:`solr_url` setting in your :ref:`config_file` accordingly.
+        </body>
+        </html>
+
+   .. note::
+
+    If you get the message ``Could not start Jetty servlet engine because no
+    Java Development Kit (JDK) was found.`` then you will have to edit the
+    ``JAVA_HOME`` setting in ``/etc/default/jetty`` to point to your machine's
+    JDK install location. For example::
+
+        JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64/
+
+    or::
+
+        JAVA_HOME=/usr/lib/jvm/java-6-openjdk-i386/
 
 #. Replace the default ``schema.xml`` file with a symlink to the CKAN schema
    file included in the sources.
@@ -34,28 +101,20 @@ installed, we need to install and configure Solr.
       sudo mv /etc/solr/conf/schema.xml /etc/solr/conf/schema.xml.bak
       sudo ln -s |virtualenv|/src/ckan/ckan/config/solr/schema.xml /etc/solr/conf/schema.xml
 
-#. Now restart Solr (use ``tomcat8`` on older Ubuntu versions)::
+   Now restart Solr:
 
-    sudo service tomcat9 restart
+   For Ubuntu 18.04::
 
-   Check that Solr is running by opening http://localhost:8983/solr/
+    sudo service jetty9 restart
 
-   .. note:: On Ubuntu 18.04 and older, instead of the Solr UI you may see an Internal Server Error page with a message containing:
+   For Ubuntu 16.04::
 
-     .. parsed-literal::
+    sudo service jetty8 restart
 
-      java.io.IOException: Cannot create directory: /var/lib/solr/data/index
-
-     This is caused by a `bug <https://bugs.launchpad.net/ubuntu/+source/lucene-solr/+bug/1829611>`_ and you need to run some extra commands to fix it:
+   Check that Solr is running by opening http://localhost:8983/solr/.
 
 
-     .. parsed-literal::
-
-        sudo mv /etc/systemd/system/tomcat9.d /etc/systemd/system/tomcat9.service.d
-        sudo systemctl daemon-reload
-        sudo service tomcat9 restart
-
-
-#. Finally, change the :ref:`solr_url` setting in your :ref:`config_file` (|ckan.ini|) to point to your Solr server, for example::
+#. Finally, change the :ref:`solr_url` setting in your :ref:`config_file` (|ckan.ini|) to
+   point to your Solr server, for example::
 
        solr_url=http://127.0.0.1:8983/solr

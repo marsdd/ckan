@@ -121,9 +121,6 @@ def datapusher_submit(context, data_dict):
     context['ignore_auth'] = True
     p.toolkit.get_action('task_status_update')(context, task)
 
-    site_user = p.toolkit.get_action(
-        'get_site_user')({'ignore_auth': True}, {})
-
     try:
         r = requests.post(
             urljoin(datapusher_url, 'job'),
@@ -131,7 +128,7 @@ def datapusher_submit(context, data_dict):
                 'Content-Type': 'application/json'
             },
             data=json.dumps({
-                'api_key': site_user['apikey'],
+                'api_key': user['apikey'],
                 'job_type': 'push_to_datastore',
                 'result_url': callback_url,
                 'metadata': {
@@ -154,11 +151,9 @@ def datapusher_submit(context, data_dict):
         raise p.toolkit.ValidationError(error)
 
     except requests.exceptions.HTTPError as e:
-        m = 'An Error occurred while sending the job: {0}'.format(str(e))
+        m = 'An Error occurred while sending the job: {0}'.format(e.message)
         try:
             body = e.response.json()
-            if body.get('error'):
-                m += ' ' + body['error']
         except ValueError:
             body = e.response.text
         error = {'message': m,

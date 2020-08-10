@@ -2,7 +2,8 @@
   <p>
     {% if change.method == "change" %}
 
-      {{ _('Set maintainer of {pkg_link} to {new_maintainer} (previously {old_maintainer})').format(
+      {{ _('Set maintainer of {pkg_link} to {new_maintainer}
+        (previously {old_maintainer})').format(
             pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
               pkg_url = h.url_for(controller='dataset',
                                   action='read', id=change.pkg_id),
@@ -14,7 +15,8 @@
 
     {% elif change.method == "add" %}
 
-      {{ _('Set maintainer of {pkg_link} to {new_maintainer}').format(
+      {{ _('Set maintainer of {pkg_link} to
+          {new_maintainer}').format(
             pkg_link = '<a href="{pkg_url}">{pkg_name}</a>'.format(
               pkg_url = h.url_for(controller='dataset',
                                   action='read', id=change.pkg_id),
