@@ -5,12 +5,11 @@ import hashlib
 import cgi
 
 import six
-from six.moves.urllib.parse import unquote, urlparse
+from six.moves.urllib.parse import unquote
 
 import sqlalchemy as sa
 from webob.request import FakeCGIBody
 
-from ckan.common import config
 from ckan.lib.i18n import get_locales_from_config
 
 
@@ -93,23 +92,4 @@ class TrackingMiddleware(object):
                      VALUES (%s, %s, %s)'''
             self.engine.execute(sql, key, data.get('url'), data.get('type'))
             return []
-        return self.app(environ, start_response)
-
-
-class HostHeaderMiddleware(object):
-    '''
-        Prevent the `Host` header from the incoming request to be used
-        in the `Location` header of a redirect.
-    '''
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        path_info = environ[u'PATH_INFO']
-        if path_info in ['/login_generic', '/user/login',
-                         '/user/logout', '/user/logged_in',
-                         '/user/logged_out']:
-            site_url = config.get('ckan.site_url')
-            parts = urlparse(site_url)
-            environ['HTTP_HOST'] = parts.netloc
         return self.app(environ, start_response)

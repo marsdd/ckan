@@ -78,11 +78,11 @@ CKAN release you're upgrading to:
    ``ckan search-index rebuild`` command.
 
 #. Finally, restart your web server. For example if you have deployed CKAN
-   using a package install, run this command:
+   using the Apache web server on Ubuntu linux, run this command:
 
    .. parsed-literal::
 
-    |restart_uwsgi|
+    |reload_apache|
 
 #. You're done!
 

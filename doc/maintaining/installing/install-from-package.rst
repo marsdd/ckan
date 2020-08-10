@@ -5,18 +5,18 @@ Installing CKAN from package
 ============================
 
 This section describes how to install CKAN from package. This is the quickest
-and easiest way to install CKAN, but it requires **Ubuntu 18.04 (Python 2) or 20.04 (Python 3 or Python 2) 64-bit**. If
+and easiest way to install CKAN, but it requires **Ubuntu 16.04 or 18.04 64-bit**. If
 you're not using any of these Ubuntu versions, or if you're installing CKAN for
 development, you should follow :doc:`install-from-source` instead.
 
 At the end of the installation process you will end up with two running web
 applications, CKAN itself and the DataPusher, a separate service for automatically
-importing data to CKAN's :doc:`/maintaining/datastore`. Additionally, there will be a process running the worker for running :doc:`/maintaining/background-tasks`. All these processes will be managed by `Supervisor <https://supervisord.org/>`_.
+importing data to CKAN's :doc:`/maintaining/datastore`.
 
-For Python 3 installations, the minimum Python version required is 3.6.
+**For Python 3 installations, the minimum Python version required is 3.6**
 
-* **Ubuntu 20.04** includes **Python 3.8** as part of its distribution
 * **Ubuntu 18.04** includes **Python 3.6** as part of its distribution
+* **Ubuntu 16.04** includes **Python 3.5** as part of its distribution
 
 
 Host ports requirements:
@@ -26,9 +26,7 @@ Host ports requirements:
     +============+============+===========+
     | NGINX      | 80         | Proxy     |
     +------------+------------+-----------+
-    | uWSGI      | 8080       | Web Server|
-    +------------+------------+-----------+
-    | uWSGI      | 8800       | DataPusher|
+    | Apache2    | 8080       | Web Server|
     +------------+------------+-----------+
     | Solr/Jetty | 8983       | Search    |
     +------------+------------+-----------+
@@ -50,61 +48,60 @@ CKAN:
 
 #. Update Ubuntu's package index::
 
-    sudo apt update
+    sudo apt-get update
 
 #. Install the Ubuntu packages that CKAN requires (and 'git', to enable you to install CKAN extensions)::
 
-    sudo apt install -y libpq5 redis-server nginx supervisor
+    sudo apt-get install -y apache2 libapache2-mod-wsgi libpq5 redis-server git-core
 
-   .. note:: If you want to install CKAN 2.9 running on Python 2 for backwards compatibility, you need to also install the Python 2 libraries:
+#. Then stop apache2 service to install nginx
 
-    .. parsed-literal::
+    sudo service apache2 stop
 
-       # On Ubuntu 18.04
-       sudo apt install python2 libpython2.7
-
-       # On Ubuntu 20.04
-       sudo apt install libpython2.7
+    sudo apt-get install -y nginx
 
 #. Download the CKAN package:
 
-    - On Ubuntu 18.04:
+    - On Ubuntu 16.04:
+
+       .. parsed-literal::
+
+           wget \http://packaging.ckan.org/|latest_package_name_xenial|
+           
+     - On Ubuntu 18.04:
 
        .. parsed-literal::
 
            wget \http://packaging.ckan.org/|latest_package_name_bionic|
 
-     - On Ubuntu 20.04, for Python 3 (recommended):
-
-       .. parsed-literal::
-
-           wget \http://packaging.ckan.org/|latest_package_name_focal_py3|
-
-     - On Ubuntu 20.04, for Python 2:
-
-       .. parsed-literal::
-
-           wget \http://packaging.ckan.org/|latest_package_name_focal_py2|
 
 #. Install the CKAN package:
 
+   - On Ubuntu 16.04:
+
+       .. parsed-literal::
+
+           sudo dpkg -i |latest_package_name_xenial|
+           
    - On Ubuntu 18.04:
 
        .. parsed-literal::
 
            sudo dpkg -i |latest_package_name_bionic|
 
-   - On Ubuntu 20.04, for Python 3:
+    .. note:: If you get the following error it means that for some reason the
+     Apache WSGI module was not enabled::
 
-       .. parsed-literal::
+        Syntax error on line 1 of /etc/apache2/sites-enabled/ckan_default:
+        Invalid command 'WSGISocketPrefix', perhaps misspelled or defined by a module not included in the server configuration
+        Action 'configtest' failed.
+        The Apache error log may have more information.
+           ...fail!
 
-           sudo dpkg -i |latest_package_name_focal_py3|
+     You can enable it by running these commands in a terminal::
 
-   - On Ubuntu 20.04, for Python 2:
-
-       .. parsed-literal::
-
-           sudo dpkg -i |latest_package_name_focal_py2|
+        sudo a2enmod wsgi
+        sudo service apache2 restart
 
 
 -----------------------------------
@@ -123,7 +120,7 @@ CKAN:
 
 Install |postgres|, running this command in a terminal::
 
-    sudo apt install -y postgresql
+    sudo apt-get install -y postgresql
 
 .. include:: postgres.rst
 
@@ -143,7 +140,11 @@ set the correct password, database and database user.
 
 Install |solr|, running this command in a terminal::
 
-    sudo apt install -y solr-tomcat
+    sudo apt-get install -y solr-jetty
+
+The install will whirr away, then towards the end you'll see this::
+
+     * Not starting jetty - edit /etc/default/jetty (or /etc/default/jetty8) and change NO_START to be 0 (or comment it out).
 
 .. include:: solr.rst
 
@@ -173,28 +174,13 @@ Install |solr|, running this command in a terminal::
 #. Also optionally, you can enable file uploads by following the
    instructions in :doc:`/maintaining/filestore`.
 
------------------------------------------
-5. Start the Web Server and restart Nginx
------------------------------------------
+---------------------------
+5. Restart Apache and Nginx
+---------------------------
 
-Reload the Supervisor daemon so the new processes are picked up::
+Restart Apache and Nginx by running this command in a terminal::
 
-    sudo supervisorctl reload
-
-After a few seconds run the following command to check the status of the processes::
-
-    sudo supervisorctl status
-
-You should see three processes running without errors::
-
-    ckan-datapusher:ckan-datapusher-00   RUNNING   pid 1963, uptime 0:00:12
-    ckan-uwsgi:ckan-uwsgi-00             RUNNING   pid 1964, uptime 0:00:12
-    ckan-worker:ckan-worker-00           RUNNING   pid 1965, uptime 0:00:12
-
-If some of the processes reports an error, make sure you've run all the previous steps and check the logs located in ``/var/log/ckan`` for more details.
-
-Restart Nginx by running this command::
-
+    sudo service apache2 restart
     sudo service nginx restart
 
 ---------------
