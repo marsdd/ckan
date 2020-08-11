@@ -11,7 +11,7 @@ set -e
 # URL for datapusher (required unless linked to a container called 'datapusher')
 : ${CKAN_DATAPUSHER_URL:=}
 
-CONFIG="${CKAN_CONFIG}/production.ini"
+CONFIG="${CKAN_CONFIG}/ckan.ini"
 
 abort() {
   echo "$@" >&2
@@ -69,7 +69,11 @@ if [ ! -e "$CONFIG" ]; then
 fi
 
 # m.m. - replace Google Analytics ID
-sed -i "s/GAID/$GAID/g" "${CKAN_CONFIG}/production.ini"
+sed -i "s/GAID/$GAID/g" "$CONFIG"
+
+# s.h. - replace based on env vars
+sed -i "s/CKAN_APP_UUID/$CKAN_APP_UUID/g" "$CONFIG"
+sed -i "s/CKAN_APP_SECRET/$CKAN_APP_SECRET/g" "$CONFIG"
 
 # Get or create CKAN_SQLALCHEMY_URL
 if [ -z "$CKAN_SQLALCHEMY_URL" ]; then

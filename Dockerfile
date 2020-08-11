@@ -64,6 +64,8 @@ RUN ckan-pip install -U pip && \
 
 RUN rm -Rf /ckan-temp
 
+RUN ckan-pip install uwsgi
+
 # Setup CKAN
 ADD . $CKAN_VENV/src/ckan/
 RUN ckan-pip install -e $CKAN_VENV/src/ckan/ && \
@@ -79,4 +81,5 @@ ENTRYPOINT ["/ckan-entrypoint.sh"]
 USER ckan
 EXPOSE 5000
 
-CMD ["ckan","run", "-H", "0.0.0.0"]
+#CMD ["ckan","run", "-H", "0.0.0.0", "-p]
+CMD ["/usr/lib/ckan/venv/bin/uwsgi", "--http", ":5000", "--wsgi-file", "/usr/lib/ckan/venv/src/ckan/wsgi.py"]
