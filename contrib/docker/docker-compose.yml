@@ -41,6 +41,8 @@ services:
         - CKAN_SITE_URL=${CKAN_SITE_URL}
         - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
         - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
+        # m.m.
+        - GAID=${GAID}
 #    links:
 #      # a.s.
 #      - db
@@ -60,8 +62,7 @@ services:
       # datasets and resources are created
       - oce_email_distribution_group=${oce_email_distribution_group}
 
-      # m.m.
-      - GAID=${GAID}
+
 
       # s.h
       # mailchimp api and audience id values for adding users to mailchimp list
@@ -122,6 +123,8 @@ services:
           - CKAN_SITE_URL=${CKAN_SITE_URL}
           - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
           - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
+            # m.m.
+          - GAID=${GAID}
 #    links:
 #      # a.s.
 #      - db
@@ -141,9 +144,6 @@ services:
       # a.s. notification emails distribution group when new
       # datasets and resources are created
       - oce_email_distribution_group=${oce_email_distribution_group}
-
-      # m.m.
-      - GAID=${GAID}
 
       # s.h
       # mailchimp api and audience id values for adding users to mailchimp list

@@ -42,6 +42,7 @@ ENV CKAN_INI=/etc/ckan/production.ini
 ARG CKAN_SITE_URL
 ARG MARS_PLUGIN_VERSION
 ARG MARS_MULTILANG_PLUGIN_VERSION
+ARG GAID
 
 # Create ckan user
 RUN useradd -r -u 900 -m -c "ckan account" -d $CKAN_HOME -s /bin/false ckan
@@ -51,7 +52,8 @@ RUN mkdir -p $CKAN_VENV $CKAN_CONFIG $CKAN_STORAGE_PATH && \
   virtualenv $CKAN_VENV && \
   ln -s $CKAN_VENV/bin/pip /usr/local/bin/ckan-pip &&\
   ln -s $CKAN_VENV/bin/paster /usr/local/bin/ckan-paster &&\
-  ln -s $CKAN_VENV/bin/ckan /usr/local/bin/ckan
+  ln -s $CKAN_VENV/bin/ckan /usr/local/bin/ckan &&\
+  ln -s $CKAN_VENV/bin/uwsgi /usr/local/bin/uwsgi
 
 RUN ckan-pip install -e git+https://github.com/ckan/ckanext-googleanalytics.git#egg=ckanext-googleanalytics && \
   ckan-pip install -r $CKAN_VENV/src/ckanext-googleanalytics/requirements.txt
@@ -76,10 +78,15 @@ RUN ckan-pip install -e $CKAN_VENV/src/ckan/ && \
   chmod +x /ckan-entrypoint.sh && \
   chown -R ckan:ckan $CKAN_HOME $CKAN_VENV $CKAN_CONFIG $CKAN_STORAGE_PATH
 
+RUN ckan generate config "$CKAN_INI"
+
+# m.m. - replace Google Analytics ID
+RUN sed -i "s/GAID/$GAID/g" "$CKAN_INI"
+
 ENTRYPOINT ["/ckan-entrypoint.sh"]
 
 USER ckan
 EXPOSE 5000
 
 #CMD ["ckan","run", "-H", "0.0.0.0", "-p]
-CMD ["/usr/lib/ckan/venv/bin/uwsgi", "--http", ":5000", "--wsgi-file", "/usr/lib/ckan/venv/src/ckan/wsgi.py"]
+CMD ["uwsgi", "--http", ":5000", "--wsgi-file", "/usr/lib/ckan/venv/src/ckan/wsgi.py", "--master", "--enable-threads"]
