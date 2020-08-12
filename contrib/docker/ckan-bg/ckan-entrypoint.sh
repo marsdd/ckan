@@ -11,8 +11,6 @@ set -e
 # URL for datapusher (required unless linked to a container called 'datapusher')
 : ${CKAN_DATAPUSHER_URL:=}
 
-CONFIG="${CKAN_CONFIG}/production.ini"
-
 abort() {
   echo "$@" >&2
   exit 1
@@ -48,10 +46,6 @@ set_environment() {
   export oce_email_distribution_group=${oce_email_distribution_group}
 }
 
-write_config() {
-  ckan generate config "$CONFIG"
-}
-
 # Wait for PostgreSQL
 # a.s. good when using docker, not necessary with RDS
 # a.s. while ! pg_isready -h db -U postgres; do
@@ -68,14 +62,6 @@ until curl -f "http://${solr_host}:${solr_port}"; do
   echo >&2 "Solr is not ready - sleeping"
   sleep 1
 done
-
-# If we don't already have a config file, bootstrap
-if [ ! -e "$CONFIG" ]; then
-  write_config
-fi
-
-# m.m. - replace Google Analytics ID
-sed -i "s/GAID/$GAID/g" "${CKAN_CONFIG}/production.ini"
 
 # Get or create CKAN_SQLALCHEMY_URL
 if [ -z "$CKAN_SQLALCHEMY_URL" ]; then
