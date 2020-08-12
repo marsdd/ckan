@@ -89,4 +89,4 @@ USER ckan
 EXPOSE 5000
 
 #CMD ["ckan","run", "-H", "0.0.0.0", "-p]
-CMD ["uwsgi", "--http", ":5000", "--wsgi-file", "/usr/lib/ckan/venv/src/ckan/wsgi.py", "--master", "--enable-threads"]
+CMD ["uwsgi", "--http", ":5000", "--wsgi-file", "/usr/lib/ckan/venv/src/ckan/wsgi.py", "--master", "--enable-threads", "--need-app"]
