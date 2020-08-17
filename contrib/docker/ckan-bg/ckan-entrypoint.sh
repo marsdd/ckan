@@ -84,8 +84,8 @@ set_environment
 
 # initialize core db
 ckan db init
-# initialize avin plugin db
-ckan-paster --plugin=ckanext-marsavin db init -c "${CKAN_CONFIG}/production.ini"
+
+ckan db upgrade --plugin marsavin
 
 # initialize multilang plugin db
 cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-multilang multilangdb initdb -c "${CKAN_CONFIG}/production.ini"
