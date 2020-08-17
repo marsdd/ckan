@@ -91,8 +91,6 @@ ckan db upgrade --plugin marsavin
 cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-multilang multilangdb initdb -c "${CKAN_CONFIG}/production.ini"
 
 # initialize the schema changes needed by the avin plugin
-
-#cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-marsavin package update_search_schema -c "${CKAN_CONFIG}/production.ini"
 ckan marsavin update_package_search_schema
 
 # initialize the schema changes needed by the multilang plugin
