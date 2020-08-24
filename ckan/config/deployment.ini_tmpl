@@ -158,7 +158,7 @@ ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
 ckan.display_timezone = server
-ckan.featured_orgs = city-of-toronto government-of-ontario government-of-canada
+ckan.featured_orgs =
 ckan.featured_orgs_homepage = government-of-ontario government-of-canada blackberry-qnx
 ckan.featured_groups_homepage = physical-infrastructure road-health telematics traffic-data vehicle-crashes vehicular-communication
 
