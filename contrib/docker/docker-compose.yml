@@ -41,6 +41,8 @@ services:
         - CKAN_SITE_URL=${CKAN_SITE_URL}
         - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
         - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
+        # m.m.
+        - GAID=${GAID}
 #    links:
 #      # a.s.
 #      - db
@@ -60,8 +62,7 @@ services:
       # datasets and resources are created
       - oce_email_distribution_group=${oce_email_distribution_group}
 
-      # m.m.
-      - GAID=${GAID}
+
 
       # s.h
       # mailchimp api and audience id values for adding users to mailchimp list
@@ -122,6 +123,8 @@ services:
           - CKAN_SITE_URL=${CKAN_SITE_URL}
           - MARS_PLUGIN_VERSION=${MARS_PLUGIN_VERSION}
           - MARS_MULTILANG_PLUGIN_VERSION=${MARS_MULTILANG_PLUGIN_VERSION}
+            # m.m.
+          - GAID=${GAID}
 #    links:
 #      # a.s.
 #      - db
@@ -131,8 +134,8 @@ services:
       - db
       # a.s. added solr
       - solr
-    ports:
-      - "0.0.0.0:${CKAN_PORT}:5000"
+#    ports:
+#      - "0.0.0.0:${CKAN_PORT}:5000"
     environment:
       # a.s. used from ckan-entrypoint.sh to wait until solr is up and running
       - solr_host=solr
@@ -141,9 +144,6 @@ services:
       # a.s. notification emails distribution group when new
       # datasets and resources are created
       - oce_email_distribution_group=${oce_email_distribution_group}
-
-      # m.m.
-      - GAID=${GAID}
 
       # s.h
       # mailchimp api and audience id values for adding users to mailchimp list
@@ -171,6 +171,8 @@ services:
       - CKAN_SMTP_USER=${CKAN_SMTP_USER}
       - CKAN_SMTP_PASSWORD=${CKAN_SMTP_PASSWORD}
       - CKAN_SMTP_MAIL_FROM=${CKAN_SMTP_MAIL_FROM}
+      - CKAN_APP_UUID=${CKAN_APP_UUID}
+      - CKAN_APP_SECRET=${CKAN_APP_SECRET}
 
       - HOME=/usr/lib/ckan
 
@@ -260,6 +262,7 @@ services:
     build:
       context: ./nginx
     ports:
+#      - "80:80"
       - "5000:5000"
 
     networks:
