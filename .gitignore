@@ -54,3 +54,4 @@ venv
 var
 venv-py2
 
+/ckan.tests.profile
