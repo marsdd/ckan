@@ -106,7 +106,7 @@ expire_api_token.default_lifetime = 3600
 
 ckan.site_id = default
 ckan.cache_enabled = True
-ckan.cache_expires = 600
+ckan.cache_expires = 10
 #solr_url = http://127.0.0.1:8983/solr
 
 
