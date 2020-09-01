@@ -85,17 +85,21 @@ set_environment
 # initialize core db
 ckan db init
 
+# initialize/upgrade marsavin plugin db
 ckan db upgrade --plugin marsavin
 
-# initialize multilang plugin db
-cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-multilang multilangdb initdb -c "${CKAN_CONFIG}/production.ini"
+# initialize/upgrade multilang plugin db
+ckan db upgrade --plugin multilang
 
+# note: all schema changes below must be run before the rebuild to make sure the data is all there.  it's not a fatal error, but will miss data otherwise.
 # initialize the schema changes needed by the avin plugin
 ckan marsavin update_package_search_schema
 
 # initialize the schema changes needed by the multilang plugin
-cd /usr/lib/ckan/venv/src/ckan && ckan-paster --plugin=ckanext-multilang multilangdb initsearch -c "${CKAN_CONFIG}/production.ini"
+ckan multilang initsearch
 
 # Rebuild the search index
-cd /usr/lib/ckan/venv/src/ckan && ckan search-index rebuild
+ckan search-index rebuild
+
+cd /usr/lib/ckan/venv/src/ckan
 exec "$@"
