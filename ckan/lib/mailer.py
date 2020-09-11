@@ -32,7 +32,8 @@ class MailerException(Exception):
 def _mail_recipient(recipient_name, recipient_email,
                     sender_name, sender_url, subject,
                     body, body_html=None, headers=None):
-
+    log.info("smtp server: ")
+    log.info(config.get("smtp.server"))
     if not headers:
         headers = {}
 
@@ -64,7 +65,6 @@ def _mail_recipient(recipient_name, recipient_email,
         msg['Reply-to'] = reply_to
 
     # Send the email using Python's smtplib.
-    smtp_connection = smtplib.SMTP()
     if 'smtp.test_server' in config:
         # If 'smtp.test_server' is configured we assume we're running tests,
         # and don't use the smtp.server, starttls, user, password etc. options.
@@ -80,11 +80,12 @@ def _mail_recipient(recipient_name, recipient_email,
         smtp_password = config.get('smtp.password')
 
     try:
-        smtp_connection.connect(smtp_server)
-    except socket.error as e:
+        smtp_connection = smtplib.SMTP(smtp_server)
+    except (socket.error, smtplib.SMTPConnectError) as e:
         log.exception(e)
         raise MailerException('SMTP server could not be connected to: "%s" %s'
                               % (smtp_server, e))
+
     try:
         # Identify ourselves and prompt the server for supported features.
         smtp_connection.ehlo()
