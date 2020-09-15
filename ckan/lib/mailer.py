@@ -32,8 +32,6 @@ class MailerException(Exception):
 def _mail_recipient(recipient_name, recipient_email,
                     sender_name, sender_url, subject,
                     body, body_html=None, headers=None):
-    log.info("smtp server: ")
-    log.info(config.get("smtp.server"))
     if not headers:
         headers = {}
 
@@ -57,8 +55,7 @@ def _mail_recipient(recipient_name, recipient_email,
     subject = Header(subject.encode('utf-8'), 'utf-8')
     msg['Subject'] = subject
     msg['From'] = _("%s <%s>") % (sender_name, mail_from)
-    recipient = u"%s <%s>" % (recipient_name, recipient_email)
-    msg['To'] = Header(recipient, 'utf-8')
+    msg['To'] = u"%s <%s>" % (recipient_name, recipient_email)
     msg['Date'] = utils.formatdate(time())
     msg['X-Mailer'] = "CKAN %s" % ckan.__version__
     if reply_to and reply_to != '':
