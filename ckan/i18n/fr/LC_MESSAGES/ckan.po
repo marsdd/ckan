@@ -3271,6 +3271,10 @@ msgstr "Chercher des données"
 msgid "Popular tags"
 msgstr "Mots-clés populaires"
 
+#: ckan/templates/home/snippets/search.html:40
+msgid "To list data assets on the AVIN Data Index, contact avindata@marsdd.com"
+msgstr "To list data assets on the AVIN Data Index, contact avindata@marsdd.com"
+
 #: ckan/templates/home/snippets/stats.html:5
 msgid "{0} statistics"
 msgstr "{0} statistiques"
