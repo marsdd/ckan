@@ -18,4 +18,9 @@
       <a class="tag" href="{% url_for 'dataset.search', tags=tag.name %}">{{ h.truncate(tag.display_name, 22) }}</a>
     {% endfor %}
   </div>
+  <div class="tags">
+    <h3>
+      {{ _("To list data assets on the AVIN Data Index, contact avindata@marsdd.com") }}
+    </h3>
+  </div>
 </div>
